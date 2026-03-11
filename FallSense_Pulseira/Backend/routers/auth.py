@@ -87,11 +87,13 @@ def login_usuario(payload: LoginPayload, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Credenciais inválidas.")
 
     # 4. VALIDAÇÃO DE 2FA (Google Authenticator)
-    if payload.codigo_2fa:
+    if usuario.is_2fa_enabled:
+        if not payload.codigo_2fa:
+            raise HTTPException(status_code=400, detail="Código 2FA obrigatório para este usuário.")
         if usuario.totp_secret is None:
             raise HTTPException(status_code=400, detail="2FA não configurado para este usuário.")
         if not verificar_totp(usuario.totp_secret, payload.codigo_2fa):
-            # Errou o código 2FA a conta como falha também
+            # Errou o código 2FA — conta como falha também
             usuario.failed_attempts += 1
             if usuario.failed_attempts >= MAX_FAILED_ATTEMPTS:
                 usuario.lockout_until = time.time() + LOCKOUT_TIME_SECONDS
