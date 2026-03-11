@@ -1,0 +1,6 @@
+# Ignora arquivos de senhas e chaves
+.env
+
+# Ignora a pasta virtual do Python (ela é pesada e inútil no Git)
+venv/
+__pycache__/
