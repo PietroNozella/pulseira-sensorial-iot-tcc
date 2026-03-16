@@ -1,0 +1,32 @@
+name: pulseira_sensorial
+description: "A new Flutter project."
+
+publish_to: 'none' 
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Ícones do iOS/Apple
+  cupertino_icons: ^1.0.8
+  
+  # Bibliotecas do nosso Backend e Segurança
+  http: ^1.2.0
+  flutter_secure_storage: ^9.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Aqui nós liberamos a pasta de imagens para o Flutter ler o fundo.jpg
+  assets:
+    - assets/images/
