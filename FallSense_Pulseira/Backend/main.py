@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from security.database import engine, get_db, Base
+from models.user import LogAuditoria
 from routers import auth, recuperacao
 
 # Inicializa a aplicação FastAPI
@@ -33,3 +34,9 @@ def testar_banco(db: Session = Depends(get_db)):
         return {"status": "SUCESSO!", "mensagem": "SQLAlchemy está conectado e rodando liso no Supabase!"}
     except Exception as e:
         return {"status": "ERRO", "detalhe": str(e)}
+
+# Rota temporária para visualizar os últimos logs de auditoria
+@app.get("/logs-auditoria", tags=["Teste"])
+def ver_logs(db: Session = Depends(get_db)):
+    logs = db.query(LogAuditoria).order_by(LogAuditoria.data_hora.desc()).limit(10).all()
+    return {"logs_recentes": logs}
