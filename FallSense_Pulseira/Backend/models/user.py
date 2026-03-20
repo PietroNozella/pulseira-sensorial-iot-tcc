@@ -1,6 +1,7 @@
 """Modelos do banco de dados (PostgreSQL / SQLAlchemy)."""
 from datetime import datetime
-from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, ForeignKey
+from sqlalchemy.sql import func
 from security.database import Base
 
 
@@ -26,3 +27,15 @@ class User(Base):
     lockout_until = Column(Float, default=0.0, nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class LogAuditoria(Base):
+    """Tabela de logs de auditoria para rastreabilidade de ações críticas."""
+    __tablename__ = "logs_auditoria"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios_api.id", ondelete="SET NULL"), nullable=True)
+    acao = Column(String, nullable=False)
+    descricao = Column(String, nullable=False)
+    data_hora = Column(DateTime(timezone=True), server_default=func.now())
+    status = Column(String, nullable=False)
