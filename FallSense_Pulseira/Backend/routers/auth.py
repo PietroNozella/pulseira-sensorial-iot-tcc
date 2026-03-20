@@ -1,82 +1,66 @@
-# backend/routers/auth.py
 import time
-from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr
 
-# 1. Importa a conexão com o banco (SQLAlchemy)
+# Importa a conexão com o banco e o modelo
 from security.database import get_db
-
-# 2. Importa o modelo da Tabela (A "Planta Baixa" que criamos)
 from models.user import User
 
-# 3. Importa as nossas ferramentas de segurança blindadas
+# Importa as ferramentas de segurança
 from security.hashing import gerar_hash, verificar_senha
 from security.jwt_handler import criar_token_jwt
 from security.totp_handler import gerar_segredo_totp, verificar_totp
+from schemas.auth_schemas import RegistroPayload, LoginPayload
 
 router = APIRouter()
 
-# --- CONFIGURAÇÕES DE BRUTE FORCE (Frente 3) ---
+# Config de brute force
 MAX_FAILED_ATTEMPTS = 3
 LOCKOUT_TIME_SECONDS = 300 # 5 minutos de bloqueio
 
-# --- MODELOS PYDANTIC (Validação do JSON do Swagger) ---
-class RegistroPayload(BaseModel):
-    nome_completo: str
-    email: EmailStr
-    telefone: str
-    senha: str
-
-class LoginPayload(BaseModel):
-    email: EmailStr
-    senha: str
-    codigo_2fa: str | None = None  # Opcional na requisição para não quebrar testes antigos
-
-# --- ROTAS ---
-
 @router.post("/registrar", status_code=201)
 def registrar_usuario(payload: RegistroPayload, db: Session = Depends(get_db)):
-    # 1. Verifica se o e-mail já existe no banco
+    # Verifica se o e-mail já existe no banco
     usuario_existente = db.query(User).filter(User.email == payload.email).first()
     if usuario_existente:
         raise HTTPException(status_code=400, detail="E-mail já cadastrado no sistema.")
 
-    # 2. Cria o novo usuário com senha criptografada e um segredo 2FA único
+    # Cria o novo usuário com senha criptografada e um 2FA único
     novo_usuario = User(
         email=payload.email,
         hashed_password=gerar_hash(payload.senha),
-        totp_secret=gerar_segredo_totp(),
-        is_2fa_enabled=True
+        totp_secret=gerar_segredo_totp()
     )
     
-    # 3. Salva no banco de dados usando o SQLAlchemy
+    # Salva no banco de dados usando o SQLAlchemy
     db.add(novo_usuario)
     db.commit()
     db.refresh(novo_usuario)
     
-    return {"mensagem": f"Usuário {payload.nome_completo} cadastrado com sucesso!"}
+    return {
+        "mensagem": "Usuário {} cadastrado com sucesso!".format(payload.nome_completo),
+        "totp_secret": novo_usuario.totp_secret
+    }
 
 
 @router.post("/login")
 def login_usuario(payload: LoginPayload, db: Session = Depends(get_db)):
-    # 1. Busca o usuário pelo e-mail
+    # Busca o usuário pelo e-mail
     usuario = db.query(User).filter(User.email == payload.email).first()
 
     if not usuario:
         raise HTTPException(status_code=400, detail="Credenciais inválidas.")
 
-    # 2. Verifica se a conta está bloqueada
+    # Verifica se a conta está bloqueada
     tempo_atual = time.time()
     if usuario.lockout_until > tempo_atual:
         tempo_restante = int(usuario.lockout_until - tempo_atual)
         raise HTTPException(
             status_code=429, 
-            detail=f"Conta temporariamente bloqueada. Tente novamente em {tempo_restante} segundos."
+            detail="Conta temporariamente bloqueada. Tente novamente em {} segundos.".format(tempo_restante)
         )
 
-    # 3. VALIDAÇÃO DE SENHA
+    # VALIDAÇÃO DE SENHA
     if not verificar_senha(usuario.hashed_password, payload.senha):
         # Adiciona 1 falha na conta
         usuario.failed_attempts += 1
@@ -86,32 +70,31 @@ def login_usuario(payload: LoginPayload, db: Session = Depends(get_db)):
         db.commit()
         raise HTTPException(status_code=400, detail="Credenciais inválidas.")
 
-    # 4. VALIDAÇÃO DE 2FA (Google Authenticator)
-    if usuario.is_2fa_enabled:
-        if not payload.codigo_2fa:
-            raise HTTPException(status_code=400, detail="Código 2FA obrigatório para este usuário.")
-        if usuario.totp_secret is None:
-            raise HTTPException(status_code=400, detail="2FA não configurado para este usuário.")
-        if not verificar_totp(usuario.totp_secret, payload.codigo_2fa):
-            # Errou o código 2FA — conta como falha também
-            usuario.failed_attempts += 1
-            if usuario.failed_attempts >= MAX_FAILED_ATTEMPTS:
-                usuario.lockout_until = time.time() + LOCKOUT_TIME_SECONDS
-            db.commit()
-            raise HTTPException(status_code=400, detail="Código 2FA inválido.")
-        usuario.last_2fa_at = datetime.utcnow()
+    # VALIDAÇÃO DE 2FA (Google Authenticator)
+    if not payload.codigo_2fa:
+        return {"requer_2fa": True, "mensagem": "Senha correta. Insira o código 2FA."}
 
-    # 5. Reseta as falhas e o bloqueio para zero
+    # Se o Flutter enviou o código, vamos validar
+    codigo_limpo = payload.codigo_2fa.replace(" ", "")
+    
+    if not verificar_totp(usuario.totp_secret, codigo_limpo):
+        usuario.failed_attempts += 1
+        if usuario.failed_attempts >= 3:
+            usuario.lockout_until = time.time() + 300
+        db.commit()
+        raise HTTPException(status_code=400, detail="Código 2FA inválido.")
+
+    # Reseta as falhas e o bloqueio para zero
     usuario.failed_attempts = 0
     usuario.lockout_until = 0.0
     db.commit()
 
-    # 6. Gera o Token JWT
+    # Gera o Token JWT
     token_acesso = criar_token_jwt(usuario.email)
 
     return {
         "mensagem": "Autenticação realizada com sucesso!", 
         "access_token": token_acesso, 
         "token_type": "bearer",
-        "2fa_requirido": True
+        "requer_2fa": False
     }
