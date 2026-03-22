@@ -1,16 +1,16 @@
 import time
 import json
 import secrets
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 
 # Importa a conexão com o banco e o modelo
 from security.database import get_db
-from models.user import User
+from models.user import User, LogAuditoria
 
 # Importa as ferramentas de segurança
 from security.hashing import gerar_hash, verificar_senha
-from security.jwt_handler import criar_token_jwt
+from security.jwt_handler import criar_token_jwt, verificar_token_jwt, revogar_token
 from security.totp_handler import gerar_segredo_totp, verificar_totp
 from schemas.auth_schemas import RegistroPayload, LoginPayload
 
@@ -109,8 +109,38 @@ def login_usuario(payload: LoginPayload, db: Session = Depends(get_db)):
     token_acesso = criar_token_jwt(usuario.email)
 
     return {
-        "mensagem": "Autenticação realizada com sucesso!", 
-        "access_token": token_acesso, 
+        "mensagem": "Autenticação realizada com sucesso!",
+        "access_token": token_acesso,
         "token_type": "bearer",
         "requer_2fa": False
     }
+
+
+@router.post("/logout")
+def logout_usuario(
+    authorization: str = Header(..., description="Bearer <token>"),
+    db: Session = Depends(get_db)
+):
+    # Extrai o token do header Authorization: Bearer <token>
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=400, detail="Formato de token inválido.")
+
+    token = authorization.removeprefix("Bearer ").strip()
+
+    # Valida o token (assinatura, expiração e blacklist) e recupera o e-mail
+    email = verificar_token_jwt(token, db)
+
+    # Insere o token na blacklist — impede qualquer reuso após logout
+    revogar_token(token, db)
+
+    # Registra a ação no log de auditoria para rastreabilidade
+    usuario = db.query(User).filter(User.email == email).first()
+    db.add(LogAuditoria(
+        usuario_id=usuario.id if usuario else None,
+        acao="LOGOUT",
+        descricao="Sessão encerrada e token JWT revogado para o usuário {}.".format(email),
+        status="SUCESSO"
+    ))
+    db.commit()
+
+    return {"mensagem": "Logout realizado com sucesso. Token invalidado."}
