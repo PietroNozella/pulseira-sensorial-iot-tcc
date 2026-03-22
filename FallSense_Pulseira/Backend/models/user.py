@@ -40,6 +40,17 @@ class LogAuditoria(Base):
     data_hora = Column(DateTime(timezone=True), server_default=func.now())
     status = Column(String, nullable=False)
 
+class TokenRevogado(Base):
+    """Blacklist de tokens JWT revogados via logout."""
+    __tablename__ = "tokens_revogados"
+
+    id = Column(Integer, primary_key=True, index=True)
+    # O token JWT completo revogado
+    token = Column(String, unique=True, index=True, nullable=False)
+    # Momento em que o logout foi efetuado
+    revogado_em = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class TokenRecuperacao(Base):
     """Tabela para armazenar os tokens temporários de esqueci a senha."""
     __tablename__ = "tokens_recuperacao"

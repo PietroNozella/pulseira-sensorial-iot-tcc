@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from security.database import engine, get_db, Base
-from models.user import LogAuditoria
+from models.user import LogAuditoria, TokenRevogado  # noqa: F401 — garante criação das tabelas
 from routers import auth, recuperacao
 
 # Inicializa a aplicação FastAPI
