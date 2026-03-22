@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'home_screen.dart'; 
-import 'forgot_password_screen.dart'; // <-- IMPORT ADICIONADO PARA RECONHECER A NOVA TELA
+import 'home_screen.dart';
+import 'forgot_password_screen.dart';
+import '../services/storage_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -60,6 +61,11 @@ class _LoginScreenState extends State<LoginScreen> {
             },
           );
         } else {
+          // Salva o token JWT caso o backend retorne sem exigir 2FA
+          final String? token = dadosCorpo['access_token'];
+          if (token != null) {
+            await StorageService().saveToken(token);
+          }
           _irParaHome();
         }
 
