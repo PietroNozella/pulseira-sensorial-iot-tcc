@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; 
+import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'home_screen.dart'; 
+import 'home_screen.dart';
+import '../services/storage_service.dart';
 
 class TwoFactorScreen extends StatefulWidget {
   final String email;
@@ -50,10 +51,17 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
 
       if (response.statusCode == 200) {
         if (!mounted) return;
+
+        // Extrai e persiste o JWT para uso nas requisições autenticadas
+        final dados = jsonDecode(response.body);
+        final String? token = dados['access_token'];
+        if (token != null) {
+          await StorageService().saveToken(token);
+        }
+
         _exibirMensagem("Acesso autorizado!", Colors.green);
-        
-        // MELHORIA: Navigator.pushAndRemoveUntil impede que o usuário volte 
-        // para a tela de login/2fa após entrar no app
+
+        // pushAndRemoveUntil impede voltar para login/2fa após entrar no app
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
