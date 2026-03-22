@@ -39,3 +39,14 @@ class LogAuditoria(Base):
     descricao = Column(String, nullable=False)
     data_hora = Column(DateTime(timezone=True), server_default=func.now())
     status = Column(String, nullable=False)
+
+class TokenRecuperacao(Base):
+    """Tabela para armazenar os tokens temporários de esqueci a senha."""
+    __tablename__ = "tokens_recuperacao"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, index=True, nullable=False)
+    token = Column(String, unique=True, index=True, nullable=False)
+    # Define quando o link de recuperação expira (ex: 1 hora)
+    expiracao = Column(DateTime, nullable=False)
+    usado = Column(Boolean, default=False)

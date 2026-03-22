@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  // ATENÇÃO: Peça para seu amigo o IP da máquina dele. 
-  // Se estiverem na mesma rede, será algo como "192.168.0.XX"
-  static const String baseUrl = "http://192.168.0.XXX:8000/auth";
+  // Mudamos para localhost (127.0.0.1) para rodar tudo na sua máquina
+  static const String baseUrl = "http://127.0.0.1:8000/auth";
 
+  // --- FUNÇÃO DE REGISTRO (Já existia) ---
   Future<bool> registrarNoBackend({
     required String nome,
     required String email,
@@ -17,17 +17,48 @@ class ApiService {
         Uri.parse('$baseUrl/registrar'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "nome_completo": nome, // Exatamente como no RegistroPayload do Python
+          "nome_completo": nome,
           "email": email,
           "telefone": telefone,
           "senha": senha,
         }),
       );
-
-      // Status 201 significa "Criado com sucesso" no FastAPI
       return response.statusCode == 201;
     } catch (e) {
-      print("Erro de conexão: $e");
+      print("Erro de conexão no Registro: $e");
+      return false;
+    }
+  }
+
+  // --- NOVA FUNÇÃO: SOLICITAR RECUPERAÇÃO ---
+  Future<bool> solicitarRecuperacao(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/esqueci-senha'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Erro ao solicitar recuperação: $e");
+      return false;
+    }
+  }
+
+  // --- NOVA FUNÇÃO: RESETAR SENHA ---
+  Future<bool> resetarSenha(String token, String novaSenha) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/resetar-senha'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "token": token,
+          "nova_senha": novaSenha,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Erro ao resetar senha: $e");
       return false;
     }
   }

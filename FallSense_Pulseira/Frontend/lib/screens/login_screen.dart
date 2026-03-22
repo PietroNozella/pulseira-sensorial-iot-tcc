@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'home_screen.dart'; 
+import 'forgot_password_screen.dart'; // <-- IMPORT ADICIONADO PARA RECONHECER A NOVA TELA
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -133,8 +134,31 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
+
+              // --- BOTÃO ESQUECI MINHA SENHA ADICIONADO AQUI ---
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForgotPasswordScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    "Esqueci minha senha",
+                    style: TextStyle(
+                      color: Colors.blueAccent, 
+                      fontWeight: FontWeight.bold
+                    ),
+                  ),
+                ),
+              ),
+              // ------------------------------------------------
               
-              const SizedBox(height: 30),
+              const SizedBox(height: 20), // Ajustei o espaço para o botão caber bem
               SizedBox(
                 width: double.infinity,
                 height: 50,

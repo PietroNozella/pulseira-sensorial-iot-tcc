@@ -17,5 +17,8 @@ class EsqueciSenhaPayload(BaseModel):
     email: EmailStr
 
 class ResetarSenhaPayload(BaseModel):
+    # Adicionamos o e-mail aqui também, caso o Flutter envie
+    email: EmailStr | None = None 
     token: str
+    # Usamos 'nova_senha' pois é o que está no seu recuperacao.py
     nova_senha: str

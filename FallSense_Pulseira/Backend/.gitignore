@@ -4,3 +4,8 @@
 # Ignora a pasta virtual do Python (ela é pesada e inútil no Git)
 venv/
 __pycache__/
+
+# Ignora o Banco de Dados Local (SQLite)
+# Cada membro do grupo terá o seu próprio arquivo localmente
+*.db
+*.sqlite3
