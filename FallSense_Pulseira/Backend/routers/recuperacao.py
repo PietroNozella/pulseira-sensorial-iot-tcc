@@ -13,7 +13,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # --- IMPORTS ALINHADOS COM SUA ESTRUTURA ---
 from security.database import get_db
 from security.hashing import gerar_hash
-from models.user import User, TokenRecuperacao
+from models.user import User, TokenRecuperacao, LogAuditoria
 from schemas.auth_schemas import EsqueciSenhaPayload, ResetarSenhaPayload
 
 load_dotenv()
@@ -77,9 +77,27 @@ async def solicitar_recuperacao(payload: EsqueciSenhaPayload, db: Session = Depe
     fm = FastMail(conf)
     try:
         await fm.send_message(message)
+
+        # Registra a solicitação bem-sucedida no log de auditoria (req. 2.6)
+        db.add(LogAuditoria(
+            usuario_id=usuario.id,
+            acao="RECUPERACAO_SENHA_SOLICITADA",
+            descricao="Token de recuperação gerado e e-mail enviado para {}.".format(payload.email),
+            status="SUCESSO"
+        ))
+        db.commit()
+
         return {"mensagem": "E-mail enviado com sucesso!"}
     except Exception as e:
-        print(f"Erro no envio: {e}")
+        # Registra a falha no log de auditoria antes de lançar o erro (req. 2.6)
+        db.add(LogAuditoria(
+            usuario_id=usuario.id,
+            acao="RECUPERACAO_SENHA_SOLICITADA",
+            descricao="Falha ao enviar e-mail de recuperação para {}: {}.".format(payload.email, str(e)),
+            status="FALHA"
+        ))
+        db.commit()
+
         raise HTTPException(status_code=500, detail="Erro ao enviar e-mail.")
 
 @router.post("/resetar-senha")
@@ -91,6 +109,14 @@ def resetar_senha(payload: ResetarSenhaPayload, db: Session = Depends(get_db)):
     ).first()
 
     if not db_token or db_token.expiracao < datetime.utcnow():
+        # Registra a tentativa com token inválido ou expirado (req. 2.7)
+        db.add(LogAuditoria(
+            usuario_id=None,
+            acao="RECUPERACAO_SENHA_RESET",
+            descricao="Tentativa de reset com token inválido ou expirado para o e-mail {}.".format(payload.token[:8] + "..."),
+            status="FALHA"
+        ))
+        db.commit()
         raise HTTPException(status_code=400, detail="Token inválido ou expirado.")
 
     usuario = db.query(User).filter(User.email == db_token.email).first()
@@ -99,7 +125,15 @@ def resetar_senha(payload: ResetarSenhaPayload, db: Session = Depends(get_db)):
 
     # Gera o hash da nova senha antes de salvar (nunca armazenar texto plano)
     usuario.hashed_password = gerar_hash(payload.nova_senha)
-    db_token.usado = True 
+    db_token.usado = True
+
+    # Registra o sucesso do reset no log de auditoria (req. 2.7)
+    db.add(LogAuditoria(
+        usuario_id=usuario.id,
+        acao="RECUPERACAO_SENHA_RESET",
+        descricao="Senha redefinida com sucesso para o usuário {}.".format(usuario.email),
+        status="SUCESSO"
+    ))
     db.commit()
-    
+
     return {"mensagem": "Senha atualizada com sucesso!"}
