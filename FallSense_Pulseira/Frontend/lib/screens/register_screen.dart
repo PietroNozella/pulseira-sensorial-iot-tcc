@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // NECESSÁRIO PARA OS FORMATADORES
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:flutter/services.dart';
+import '../api_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -40,30 +39,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    final String urlLocal = "http://127.0.0.1:8000/auth/registrar";
-
     try {
-      final response = await http.post(
-        Uri.parse(urlLocal),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "nome_completo": nome,
-          "email": email,
-          "telefone": telefone,
-          "senha": senha,
-        }),
+      final resultado = await ApiService().registrar(
+        nome: nome,
+        email: email,
+        telefone: telefone,
+        senha: senha,
       );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
+      final int status = resultado['status'];
+      final Map<String, dynamic> corpo = resultado['body'];
+
+      if (status == 201 || status == 200) {
         if (!mounted) return;
 
-        final dadosResposta = jsonDecode(response.body);
-        final String? segredo2FA = dadosResposta['totp_secret'];
+        final String? segredo2FA = corpo['totp_secret'];
 
         if (segredo2FA == null || segredo2FA.isEmpty) {
           _mensagemErro("Erro: Chave 2FA não gerada pelo servidor.");
           return;
         }
+
+        // Recupera os códigos de backup gerados pelo servidor
+        final List<String> recoveryCodes =
+            List<String>.from(corpo['recovery_codes'] ?? []);
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -73,18 +72,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
 
         Navigator.pushReplacementNamed(
-          context, 
-          '/2fa', 
+          context,
+          '/2fa',
           arguments: {
             'email': email,
             'senha': senha,
             'secretKey': segredo2FA,
+            'recoveryCodes': recoveryCodes,
           },
         );
-        
       } else {
-        var erroData = jsonDecode(response.body);
-        _mensagemErro(erroData['detail']?.toString() ?? "Erro ao realizar cadastro.");
+        _mensagemErro(corpo['detail']?.toString() ?? "Erro ao realizar cadastro.");
       }
     } catch (e) {
       _mensagemErro("Erro de conexão. O servidor está ligado no IP 127.0.0.1?");
