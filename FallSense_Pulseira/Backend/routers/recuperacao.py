@@ -11,7 +11,8 @@ from dotenv import load_dotenv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # --- IMPORTS ALINHADOS COM SUA ESTRUTURA ---
-from security.database import get_db 
+from security.database import get_db
+from security.hashing import gerar_hash
 from models.user import User, TokenRecuperacao
 from schemas.auth_schemas import EsqueciSenhaPayload, ResetarSenhaPayload
 
@@ -96,8 +97,8 @@ def resetar_senha(payload: ResetarSenhaPayload, db: Session = Depends(get_db)):
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
 
-    # Atualiza o campo hashed_password (conforme seu modelo)
-    usuario.hashed_password = payload.nova_senha 
+    # Gera o hash da nova senha antes de salvar (nunca armazenar texto plano)
+    usuario.hashed_password = gerar_hash(payload.nova_senha)
     db_token.usado = True 
     db.commit()
     
