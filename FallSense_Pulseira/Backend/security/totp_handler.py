@@ -1,4 +1,3 @@
-# backend/security/totp_handler.py
 import pyotp
 
 def gerar_segredo_totp() -> str:

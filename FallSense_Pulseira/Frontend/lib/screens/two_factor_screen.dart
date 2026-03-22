@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'home_screen.dart';
 import '../services/storage_service.dart';
+import '../api_service.dart';
 
 class TwoFactorScreen extends StatefulWidget {
   final String email;
   final String senha;
-  final String? secretKey; 
+  final String? secretKey;
+  // Lista de recovery codes exibida apenas no primeiro acesso (após registro)
+  final List<String>? recoveryCodes;
 
   const TwoFactorScreen({
-    super.key, 
-    required this.email, 
-    required this.senha, 
-    this.secretKey 
+    super.key,
+    required this.email,
+    required this.senha,
+    this.secretKey,
+    this.recoveryCodes,
   });
 
   @override
@@ -26,8 +28,6 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
   bool _carregando = false;
 
   Future<void> _validarCodigo() async {
-    const String urlServidor = "http://127.0.0.1:8000/auth/login";
-
     // .trim() remove espaços acidentais que o teclado pode inserir
     String codigo = _codeController.text.trim();
 
@@ -39,22 +39,20 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
     setState(() => _carregando = true);
 
     try {
-      final response = await http.post(
-        Uri.parse(urlServidor),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": widget.email,
-          "senha": widget.senha,
-          "codigo_2fa": codigo,
-        }),
+      final resultado = await ApiService().login(
+        email: widget.email,
+        senha: widget.senha,
+        codigo2fa: codigo,
       );
 
-      if (response.statusCode == 200) {
+      final int status = resultado['status'];
+      final Map<String, dynamic> corpo = resultado['body'];
+
+      if (status == 200) {
         if (!mounted) return;
 
         // Extrai e persiste o JWT para uso nas requisições autenticadas
-        final dados = jsonDecode(response.body);
-        final String? token = dados['access_token'];
+        final String? token = corpo['access_token'];
         if (token != null) {
           await StorageService().saveToken(token);
         }
@@ -68,8 +66,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
           (route) => false,
         );
       } else {
-        final erro = jsonDecode(response.body)['detail'];
-        _exibirMensagem(erro.toString(), Colors.red);
+        _exibirMensagem(corpo['detail']?.toString() ?? "Código inválido.", Colors.red);
       }
     } catch (e) {
       _exibirMensagem("Erro de conexão com o servidor.", Colors.red);
@@ -149,6 +146,64 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
                     ],
                   ),
                 ),
+
+                // Exibe os recovery codes logo após a chave TOTP, apenas no registro
+                if (widget.recoveryCodes != null) ...[
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.orange.withOpacity(0.4)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 18),
+                            SizedBox(width: 6),
+                            Text(
+                              "Códigos de recuperação",
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          "Guarde esses códigos em local seguro. Use um deles para acessar sua conta caso perca o autenticador. Cada código funciona apenas uma vez.",
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                        const SizedBox(height: 10),
+                        // Grade de 2 colunas com os 8 códigos
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: widget.recoveryCodes!.map((c) => Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                            ),
+                            child: Text(c, style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold)),
+                          )).toList(),
+                        ),
+                        const SizedBox(height: 8),
+                        // Botão para copiar todos de uma vez
+                        TextButton.icon(
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: widget.recoveryCodes!.join('\n')));
+                            _exibirMensagem("Códigos copiados!", Colors.orange);
+                          },
+                          icon: const Icon(Icons.copy, size: 16, color: Colors.orange),
+                          label: const Text("Copiar todos", style: TextStyle(color: Colors.orange)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ] else ...[
                 const Text(
                   "Insira o código de 6 dígitos gerado no seu aplicativo de autenticação.",

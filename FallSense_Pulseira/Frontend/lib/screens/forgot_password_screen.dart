@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import '../api_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -32,20 +31,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _carregando = true);
 
     try {
-      final response = await http.post(
-        Uri.parse("http://127.0.0.1:8000/auth/esqueci-senha"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"email": email}),
-      );
+      final resultado = await ApiService().solicitarRecuperacao(email);
 
       if (!mounted) return;
 
-      if (response.statusCode == 200) {
+      if (resultado['status'] == 200) {
         _exibirMensagem("Se o e-mail estiver cadastrado, o código foi enviado.", Colors.green);
         // Avança para a etapa de inserir token + nova senha
         setState(() => _etapaReset = true);
       } else {
-        final erro = jsonDecode(response.body)['detail'] ?? "Erro ao solicitar recuperação.";
+        final erro = resultado['body']['detail'] ?? "Erro ao solicitar recuperação.";
         _exibirMensagem(erro.toString(), Colors.red);
       }
     } catch (e) {
@@ -74,23 +69,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _carregando = true);
 
     try {
-      final response = await http.post(
-        Uri.parse("http://127.0.0.1:8000/auth/resetar-senha"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "token": token,
-          "nova_senha": novaSenha,
-        }),
+      final resultado = await ApiService().resetarSenha(
+        token: token,
+        novaSenha: novaSenha,
       );
 
       if (!mounted) return;
 
-      if (response.statusCode == 200) {
+      if (resultado['status'] == 200) {
         _exibirMensagem("Senha alterada com sucesso!", Colors.green);
         // Volta para o login após reset bem-sucedido
         Navigator.pop(context);
       } else {
-        final erro = jsonDecode(response.body)['detail'] ?? "Erro ao resetar senha.";
+        final erro = resultado['body']['detail'] ?? "Erro ao resetar senha.";
         _exibirMensagem(erro.toString(), Colors.red);
       }
     } catch (e) {

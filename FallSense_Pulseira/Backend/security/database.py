@@ -8,7 +8,7 @@ load_dotenv(find_dotenv())
 
 DB_URL = os.getenv("DATABASE_URL")
 
-# Trava de segurança
+# Trava de segurança: impede iniciar o servidor sem o banco configurado
 if not DB_URL:
     raise ValueError("⚠️ ALERTA: A variável DATABASE_URL não foi encontrada no arquivo .env!")
 
@@ -28,4 +28,4 @@ def get_db():
     try:
         yield db
     finally:
-        db.close() # Garante que a conexão será fechada mesmo se der erro na rota
+        db.close()  # Garante que a conexão será fechada mesmo se der erro na rota

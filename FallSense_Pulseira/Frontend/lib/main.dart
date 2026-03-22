@@ -46,11 +46,14 @@ class MyApp extends StatelessWidget {
           
           return MaterialPageRoute(
             builder: (context) => TwoFactorScreen(
-              // Se o argumento não existir, passa uma string vazia para evitar erro de tipo
               email: args['email'] ?? '',
               senha: args['senha'] ?? '',
-              // secretKey pode ser null (ex: quando o usuário vem pelo login normal)
-              secretKey: args['secretKey'], 
+              // secretKey só vem após registro; null quando usuário vem pelo login
+              secretKey: args['secretKey'],
+              // recoveryCodes só vem após registro; null no login normal
+              recoveryCodes: args['recoveryCodes'] != null
+                  ? List<String>.from(args['recoveryCodes'])
+                  : null,
             ),
           );
         }

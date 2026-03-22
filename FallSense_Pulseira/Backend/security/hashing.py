@@ -1,5 +1,5 @@
-#Implementar a função que recebe a senha em texto claro e devolve o Hash
-#O Argon2 gera o Salt sozinho e o embute na mesma string final
+# Implementar a função que recebe a senha em texto claro e devolve o Hash
+# O Argon2 gera o Salt sozinho e o embute na mesma string final
 
 # 1 - Time Cost (Iterações)
 # 2 - Memory Cost (Uso de RAM)
@@ -18,7 +18,7 @@ ph = PasswordHasher(
 
 
 # Gerar um hash criptográfico seguro usando Argon2id.
-# O 'argon2-cffi' cria automaticamente um Salt único e seguro e o embute na string final retornada   
+# O 'argon2-cffi' cria automaticamente um Salt único e seguro e o embute na string final retornada
 def gerar_hash(senha_plana: str) -> str:
     return ph.hash(senha_plana)
 

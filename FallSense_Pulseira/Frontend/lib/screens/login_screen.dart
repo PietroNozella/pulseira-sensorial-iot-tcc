@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'home_screen.dart';
 import 'forgot_password_screen.dart';
 import '../services/storage_service.dart';
+import '../api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,8 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _verSenha = false;
 
   Future<void> _tentarEntrar() async {
-    const String urlServidor = "http://127.0.0.1:8000/auth/login";
-
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       _exibirErro("Preencha e-mail e senha!");
       return;
@@ -31,47 +28,40 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _carregando = true);
 
     try {
-      final response = await http.post(
-        Uri.parse(urlServidor),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": _emailController.text.trim(),
-          "senha": _passwordController.text,
-          "codigo_2fa": null, 
-        }),
+      final resultado = await ApiService().login(
+        email: _emailController.text.trim(),
+        senha: _passwordController.text,
       );
 
-      final dadosCorpo = jsonDecode(response.body);
+      final int status = resultado['status'];
+      final Map<String, dynamic> corpo = resultado['body'];
 
-      if (response.statusCode == 200) {
+      if (status == 200) {
         if (!mounted) return;
 
-        if (dadosCorpo['requer_2fa'] == true) {
+        if (corpo['requer_2fa'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Senha correta! Insira o código 2FA.")),
           );
-
           Navigator.pushNamed(
-            context, 
+            context,
             '/2fa',
             arguments: {
               'email': _emailController.text.trim(),
               'senha': _passwordController.text,
-              'secretKey': null, 
+              'secretKey': null,
             },
           );
         } else {
           // Salva o token JWT caso o backend retorne sem exigir 2FA
-          final String? token = dadosCorpo['access_token'];
+          final String? token = corpo['access_token'];
           if (token != null) {
             await StorageService().saveToken(token);
           }
           _irParaHome();
         }
-
       } else {
-        final erro = dadosCorpo['detail'] ?? "Erro ao realizar login";
-        _exibirErro(erro.toString());
+        _exibirErro(corpo['detail']?.toString() ?? "Erro ao realizar login");
       }
     } catch (e) {
       _exibirErro("Erro de conexão: Verifique o servidor");

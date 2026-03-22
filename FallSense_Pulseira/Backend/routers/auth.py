@@ -1,4 +1,6 @@
 import time
+import json
+import secrets
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,14 @@ from security.hashing import gerar_hash, verificar_senha
 from security.jwt_handler import criar_token_jwt
 from security.totp_handler import gerar_segredo_totp, verificar_totp
 from schemas.auth_schemas import RegistroPayload, LoginPayload
+
+
+def _gerar_recovery_codes() -> tuple[list[str], str]:
+    """Gera 8 códigos de recuperação legíveis e retorna os códigos em texto
+    e o JSON com seus hashes para armazenar no banco."""
+    codigos = [secrets.token_hex(4).upper() for _ in range(8)]  # ex: "A3F2B1C9"
+    hashes = json.dumps([gerar_hash(c) for c in codigos])
+    return codigos, hashes
 
 router = APIRouter()
 
@@ -25,21 +35,27 @@ def registrar_usuario(payload: RegistroPayload, db: Session = Depends(get_db)):
     if usuario_existente:
         raise HTTPException(status_code=400, detail="E-mail já cadastrado no sistema.")
 
-    # Cria o novo usuário com senha criptografada e um 2FA único
+    # Gera os recovery codes antes de criar o usuário
+    codigos_texto, codigos_hash = _gerar_recovery_codes()
+
+    # Cria o novo usuário com senha criptografada, 2FA único e recovery codes
     novo_usuario = User(
         email=payload.email,
         hashed_password=gerar_hash(payload.senha),
-        totp_secret=gerar_segredo_totp()
+        totp_secret=gerar_segredo_totp(),
+        recovery_codes_hash=codigos_hash
     )
-    
+
     # Salva no banco de dados usando o SQLAlchemy
     db.add(novo_usuario)
     db.commit()
     db.refresh(novo_usuario)
-    
+
     return {
         "mensagem": "Usuário {} cadastrado com sucesso!".format(payload.nome_completo),
-        "totp_secret": novo_usuario.totp_secret
+        "totp_secret": novo_usuario.totp_secret,
+        # Enviados apenas uma vez — o usuário deve guardar esses códigos
+        "recovery_codes": codigos_texto
     }
 
 
