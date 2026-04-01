@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
@@ -9,6 +10,7 @@ from routers import auth, recuperacao
 
 # Inicializa a aplicação FastAPI
 app = FastAPI(title="FallSense API Segura")
+app.add_middleware(HTTPSRedirectMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,7 +21,7 @@ app.add_middleware(
 )
 
 # Cria as tabelas no Supabase automaticamente se elas não existirem!
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine)
 
 # Adiciona as rotas de autenticação no sistema
 app.include_router(auth.router, prefix="/auth", tags=["Autenticação"])
