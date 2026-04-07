@@ -57,9 +57,9 @@ def enviar_email_brevo(destinatario: str, token: str):
     try:
         resposta = requests.post(url, json=payload, headers=headers)
         # Esse print vai fofocar no log do Render se o Brevo aceitou ou não
-        print(f"📢 STATUS BREVO: {resposta.status_code} - {resposta.text}")
+        print(f"STATUS BREVO: {resposta.status_code} - {resposta.text}")
     except Exception as e:
-        print(f"🚨 ERRO HTTP (BREVO): {str(e)}")
+        print(f"ERRO HTTP (BREVO): {str(e)}")
 
 
 @router.post("/esqueci-senha")
