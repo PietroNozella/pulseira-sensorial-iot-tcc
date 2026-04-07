@@ -11,13 +11,19 @@ class RegistroPayload(BaseModel):
     @field_validator("senha")
     @classmethod
     def validar_forca_senha(cls, v: str) -> str:
-        # Mínimo 8 caracteres, ao menos uma letra e um número
-        if len(v) < 8:
-            raise ValueError("A senha deve ter pelo menos 8 caracteres.")
-        if not re.search(r"[A-Za-z]", v):
-            raise ValueError("A senha deve conter pelo menos uma letra.")
-        if not re.search(r"\d", v):
-            raise ValueError("A senha deve conter pelo menos um número.")
+        #frase de erro
+        msg_erro = "A senha deve conter pelo menos letras, números e um caractere especial."
+
+        # Mínimo 8 caracteres E ter letra E ter número E ter caractere especial
+        tem_o_tamanho = len(v) >= 8
+        tem_letra = re.search(r"[A-Za-z]", v)
+        tem_numero = re.search(r"\d", v)
+        tem_especial = re.search(r"[!@#$%^&*(),.?\":{}|<>]", v)
+
+        # Se faltar QUALQUER um desses, ele manda a sua frase
+        if not (tem_o_tamanho and tem_letra and tem_numero and tem_especial):
+            raise ValueError(msg_erro)
+            
         return v
 
 class LoginPayload(BaseModel):
