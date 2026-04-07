@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 // Centraliza todas as chamadas HTTP ao backend, evitando duplicação nas screens
 class ApiService {
-  static const String baseUrl = "http://127.0.0.1:8000/auth";
+  static const String baseUrl = "https://fallsense-api.onrender.com/auth";
 
   // Retorna o body decodificado e o statusCode para o chamador tratar
   Future<Map<String, dynamic>> registrar({
