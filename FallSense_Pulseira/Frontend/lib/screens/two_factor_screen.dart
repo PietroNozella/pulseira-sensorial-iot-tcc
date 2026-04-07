@@ -8,7 +8,6 @@ class TwoFactorScreen extends StatefulWidget {
   final String email;
   final String senha;
   final String? secretKey;
-  // Lista de recovery codes exibida apenas no primeiro acesso (após registro)
   final List<String>? recoveryCodes;
 
   const TwoFactorScreen({
@@ -28,7 +27,6 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
   bool _carregando = false;
 
   Future<void> _validarCodigo() async {
-    // .trim() remove espaços acidentais que o teclado pode inserir
     String codigo = _codeController.text.trim();
 
     if (codigo.length != 6) {
@@ -51,7 +49,6 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
       if (status == 200) {
         if (!mounted) return;
 
-        // Extrai e persiste o JWT para uso nas requisições autenticadas
         final String? token = corpo['access_token'];
         if (token != null) {
           await StorageService().saveToken(token);
@@ -59,7 +56,6 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
 
         _exibirMensagem("Acesso autorizado!", Colors.green);
 
-        // pushAndRemoveUntil impede voltar para login/2fa após entrar no app
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -129,7 +125,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
                         child: SelectableText(
                           widget.secretKey!,
                           style: const TextStyle(
-                            fontFamily: 'monospace', // Fonte mono para facilitar leitura
+                            fontFamily: 'monospace',
                             fontWeight: FontWeight.bold, 
                             fontSize: 18, 
                             letterSpacing: 1.2
@@ -146,64 +142,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
                     ],
                   ),
                 ),
-
-                // Exibe os recovery codes logo após a chave TOTP, apenas no registro
-                if (widget.recoveryCodes != null) ...[
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.orange.withOpacity(0.4)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 18),
-                            SizedBox(width: 6),
-                            Text(
-                              "Códigos de recuperação",
-                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          "Guarde esses códigos em local seguro. Use um deles para acessar sua conta caso perca o autenticador. Cada código funciona apenas uma vez.",
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
-                        const SizedBox(height: 10),
-                        // Grade de 2 colunas com os 8 códigos
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 6,
-                          children: widget.recoveryCodes!.map((c) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                            ),
-                            child: Text(c, style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold)),
-                          )).toList(),
-                        ),
-                        const SizedBox(height: 8),
-                        // Botão para copiar todos de uma vez
-                        TextButton.icon(
-                          onPressed: () {
-                            Clipboard.setData(ClipboardData(text: widget.recoveryCodes!.join('\n')));
-                            _exibirMensagem("Códigos copiados!", Colors.orange);
-                          },
-                          icon: const Icon(Icons.copy, size: 16, color: Colors.orange),
-                          label: const Text("Copiar todos", style: TextStyle(color: Colors.orange)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                // OS RECOVERY CODES FORAM REMOVIDOS DAQUI PARA LIMPAR A TELA
               ] else ...[
                 const Text(
                   "Insira o código de 6 dígitos gerado no seu aplicativo de autenticação.",
@@ -217,7 +156,6 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
               TextField(
                 controller: _codeController,
                 keyboardType: TextInputType.number,
-                // Garante que apenas números sejam digitados
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 maxLength: 6,
                 textAlign: TextAlign.center,

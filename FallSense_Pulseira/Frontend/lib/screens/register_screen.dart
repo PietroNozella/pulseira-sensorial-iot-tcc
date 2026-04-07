@@ -82,16 +82,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
           },
         );
       } else {
-        _mensagemErro(corpo['detail']?.toString() ?? "Erro ao realizar cadastro.");
+        // --- LOGICA DE LIMPEZA DO ERRO ATUALIZADA AQUI ---
+        var detalhe = corpo['detail'];
+        String msgParaUsuario = "Erro ao realizar cadastro.";
+
+        if (detalhe is List && detalhe.isNotEmpty) {
+          // Captura a mensagem do servidor e limpa os termos técnicos
+          msgParaUsuario = detalhe[0]['msg'].toString().replaceAll('Value error, ', '');
+        } else if (detalhe != null) {
+          msgParaUsuario = detalhe.toString();
+        }
+        
+        _mensagemErro(msgParaUsuario);
+        // ------------------------------------------------
       }
     } catch (e) {
-      _mensagemErro("Erro de conexão. O servidor está ligado no IP 127.0.0.1?");
+      _mensagemErro("Erro de conexão. O servidor está ligado?");
     }
   }
 
   void _mensagemErro(String texto) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(texto), backgroundColor: Colors.redAccent),
+      SnackBar(
+        content: Text(texto), 
+        backgroundColor: Colors.redAccent,
+        duration: const Duration(seconds: 4), // Aumentado para dar tempo de ler a regra
+      ),
     );
   }
 
@@ -133,7 +149,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   _buildTextField(_emailController, "E-mail", Icons.email, keyboardType: TextInputType.emailAddress),
                   const SizedBox(height: 15),
                   
-                  // CAMPO TELEFONE ATUALIZADO COM TECLADO NUMÉRICO E MÁSCARA
                   _buildTextField(
                     _telefoneController, 
                     "Telefone", 
@@ -204,14 +219,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       VoidCallback? onToggle,
       TextInputType keyboardType = TextInputType.text, 
       String? hint,
-      List<TextInputFormatter>? inputFormatters, // PARÂMETRO ADICIONADO
+      List<TextInputFormatter>? inputFormatters,
     }
   ) {
     return TextField(
       controller: controller,
       obscureText: isPassword ? !isVisible : false,
       keyboardType: keyboardType,
-      inputFormatters: inputFormatters, // ATRIBUIÇÃO ADICIONADA
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -230,7 +245,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 }
 
-// CLASSE PARA A MÁSCARA AUTOMÁTICA DE TELEFONE
 class TelefoneInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
