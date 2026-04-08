@@ -1,5 +1,6 @@
 """
-Testes de autenticação — cobre requisitos 1.1 a 1.12 do checklist de segurança.
+Testes do fluxo de autenticação.
+Cobre cadastro, login em duas etapas, bloqueio por tentativas inválidas e logout.
 """
 import pyotp
 from fastapi.testclient import TestClient
@@ -19,7 +20,7 @@ def test_registro_sucesso(client: TestClient):
     })
     assert resposta.status_code == 201
     dados = resposta.json()
-    # Retorna totp_secret e recovery_codes apenas no registro
+    # Esses dados sensíveis só devem aparecer no momento do cadastro inicial.
     assert "totp_secret" in dados
     assert "recovery_codes" in dados
     assert len(dados["recovery_codes"]) == 8
@@ -119,7 +120,8 @@ def test_bloqueio_por_forca_bruta(client: TestClient, usuario_registrado):
             "senha": "SenhaErrada1"
         })
 
-    # A quarta tentativa (mesmo com senha certa) deve ser bloqueada
+    # Depois do limite de falhas, até uma tentativa com a senha correta deve
+    # ser barrada enquanto o bloqueio estiver ativo.
     resposta = client.post("/auth/login", json={
         "email": "pietro@fallsense.com",
         "senha": "Senha123"
@@ -132,7 +134,7 @@ def test_bloqueio_por_forca_bruta(client: TestClient, usuario_registrado):
 # ---------------------------------------------------------------------------
 
 def _fazer_login_completo(client: TestClient, usuario_registrado) -> str:
-    """Helper: retorna o access_token após login completo com 2FA."""
+    """Executa o login completo e devolve um token pronto para testes autenticados."""
     totp_secret = usuario_registrado["totp_secret"]
     codigo = pyotp.TOTP(totp_secret).now()
     resposta = client.post("/auth/login", json={
@@ -154,10 +156,10 @@ def test_token_revogado_apos_logout(client: TestClient, usuario_registrado):
     """Token usado no logout não deve ser aceito novamente (401)."""
     token = _fazer_login_completo(client, usuario_registrado)
 
-    # Primeiro logout — deve funcionar
+    # A primeira chamada invalida o token e encerra a sessão normalmente.
     client.post("/auth/logout", headers={"Authorization": f"Bearer {token}"})
 
-    # Segunda tentativa com o mesmo token — deve ser rejeitada
+    # A segunda chamada prova que o token foi realmente revogado.
     resposta = client.post("/auth/logout", headers={"Authorization": f"Bearer {token}"})
     assert resposta.status_code == 401
 

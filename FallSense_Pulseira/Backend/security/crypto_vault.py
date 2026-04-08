@@ -2,33 +2,35 @@ import os
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
 
-# --- CONFIGURAÇÃO DO AMBIENTE (REQ 3.6) ---
-# Aqui eu busco o arquivo .env que tá na raiz do projeto
+# Carrega o arquivo `.env` a partir da raiz do Backend para disponibilizar a
+# chave usada nas rotinas de criptografia.
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 dotenv_path = os.path.join(base_dir, ".env")
 load_dotenv(dotenv_path)
 
-# Pego a chave mestra que a gente salvou no .env
+# Recupera a chave mestra que será usada para cifrar e decifrar os dados.
 SECRET_KEY = os.getenv("ENCRYPTION_KEY")
 
-# Trava de segurança: se a chave não estiver no .env, o sistema nem abre
+# Sem a chave de criptografia, o sistema não consegue proteger nem abrir os
+# dados sensíveis; por isso a inicialização é interrompida imediatamente.
 if not SECRET_KEY:
     print("\n[ERRO] Cade a ENCRYPTION_KEY no .env? Arruma aí!")
     raise SystemExit("Sistema parado por falta de chave de segurança.")
 
-# Inicializo o motor de criptografia (AES-256)
+# Instancia o mecanismo de criptografia simétrica usado em todo o módulo.
 fernet = Fernet(SECRET_KEY.encode())
 
 def proteger_dado(texto_limpo: str) -> str:
-    """ REQ 3.4: Criptografa o dado antes de salvar no banco """
+    """Criptografa um texto antes de persistir o valor em banco."""
     if not texto_limpo:
         return None
-    # Transforma o texto em "sopa de letras" (Ciphertext)
+    # O valor é convertido para ciphertext para que o conteúdo original não
+    # fique legível fora do processo autorizado de descriptografia.
     return fernet.encrypt(texto_limpo.encode()).decode()
 
 def abrir_dado(texto_criptografado: str) -> str:
-    """ REQ 3.5: Abre o dado que veio do banco pra gente ler """
+    """Descriptografa um valor previamente protegido para uso interno da aplicação."""
     if not texto_criptografado:
         return None
-    # Devolve o texto original usando a chave mestra
+    # A operação inversa devolve o conteúdo original usando a mesma chave mestra.
     return fernet.decrypt(texto_criptografado.encode()).decode()
