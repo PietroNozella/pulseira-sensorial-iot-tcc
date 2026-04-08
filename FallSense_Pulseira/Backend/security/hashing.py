@@ -1,33 +1,30 @@
-# Implementar a função que recebe a senha em texto claro e devolve o Hash
-# O Argon2 gera o Salt sozinho e o embute na mesma string final
-
-# 1 - Time Cost (Iterações)
-# 2 - Memory Cost (Uso de RAM)
-# 3 - Parallelism (Uso de threads do processador)
-
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
+# Configuração central do Argon2id usada para gerar e validar hashes de senha.
+# O algoritmo já cria um salt aleatório por conta própria e embute esse valor,
+# junto dos parâmetros, na string final armazenada no banco.
 ph = PasswordHasher(
-    time_cost=3,          # Custo de Tempo (Iterações)
-    memory_cost=65536,    # Custo de Memória (64 MB alocados em KB)
-    parallelism=4,        # Grau de Paralelismo (Número de threads)
-    hash_len=32,          # Tamanho do hash gerado (32 bytes)
-    salt_len=16           # Tamanho do salt criptográfico aleatório (16 bytes)
+    time_cost=3,          # Quantas rodadas de processamento serão aplicadas.
+    memory_cost=65536,    # Quantidade de memória usada no cálculo do hash.
+    parallelism=4,        # Número de trilhas paralelas usadas pelo algoritmo.
+    hash_len=32,          # Tamanho final do hash gerado.
+    salt_len=16           # Tamanho do salt aleatório criado para cada senha.
 )
 
 
-# Gerar um hash criptográfico seguro usando Argon2id.
-# O 'argon2-cffi' cria automaticamente um Salt único e seguro e o embute na string final retornada
+# Converte a senha em texto puro para um hash seguro antes da persistência.
 def gerar_hash(senha_plana: str) -> str:
     return ph.hash(senha_plana)
 
-# Verifica se a senha em texto claro corresponde ao hash do banco de dados
-# O Argon2 extrai o salt e os parâmetros da própria string do hash para validar
+# Compara a senha informada no login com o hash salvo no banco.
+# O Argon2 recupera automaticamente da própria string o salt e os parâmetros
+# usados na geração original.
 def verificar_senha(senha_hash_banco: str, senha_tentativa: str) -> bool:
     try:
-        # Tenta validar a senha
+        # Se a combinação estiver correta, a biblioteca retorna True.
         return ph.verify(senha_hash_banco, senha_tentativa)
     except VerifyMismatchError:
-        # Se as senhas não baterem, a biblioteca levanta essa exceção
+        # Quando a senha não corresponde ao hash armazenado, tratamos a exceção
+        # e devolvemos False para o fluxo de autenticação.
         return False

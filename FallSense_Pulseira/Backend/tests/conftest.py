@@ -1,11 +1,12 @@
 """
 Configuração compartilhada dos testes.
-Usa SQLite em memória para não depender do Supabase durante os testes.
+Usa SQLite em memória para isolar os cenários de teste do banco real.
 """
 import os
 import pytest
 
-# Define variáveis de ambiente obrigatórias antes de qualquer import do projeto
+# Define as variáveis mínimas esperadas pela aplicação antes de importar os
+# módulos do projeto, garantindo que o ambiente de teste suba corretamente.
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ.setdefault("JWT_SECRET", "chave-secreta-de-teste-fallsense")
 os.environ.setdefault("MAIL_USERNAME", "teste@fallsense.com")
@@ -18,17 +19,19 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 
-# Engine SQLite em memória com uma única conexão compartilhada entre todos os acessos
-# (necessário para que o TestClient e os helpers de teste vejam os mesmos dados)
+# Cria um banco SQLite em memória compartilhado pela suíte de testes. O uso de
+# uma única conexão garante que o TestClient e os helpers enxerguem o mesmo
+# estado de dados durante cada execução.
 engine_teste = create_engine(
     "sqlite://",
     connect_args={"check_same_thread": False},
-    # Força todas as requisições a reutilizarem a mesma conexão em memória
+    # Mantém a mesma conexão em memória ativa entre diferentes acessos.
     poolclass=__import__("sqlalchemy.pool", fromlist=["StaticPool"]).StaticPool,
 )
 SessionTeste = sessionmaker(autocommit=False, autoflush=False, bind=engine_teste)
 
-# Substitui o engine do módulo database antes de importar o app
+# Redireciona o módulo principal de banco para usar a infraestrutura de teste
+# antes de carregar a aplicação FastAPI.
 import security.database as db_module
 db_module.engine = engine_teste
 db_module.SessionLocal = SessionTeste
@@ -38,7 +41,7 @@ from main import app
 
 
 def sobrescrever_get_db():
-    """Substitui a conexão real (Supabase) pelo banco de teste (SQLite)."""
+    """Entrega uma sessão do banco de teste no lugar da conexão real."""
     db = SessionTeste()
     try:
         yield db
@@ -46,13 +49,13 @@ def sobrescrever_get_db():
         db.close()
 
 
-# Substitui a dependência de banco em toda a aplicação durante os testes
+# Aplica o override global para que todas as rotas testadas usem o banco em memória.
 app.dependency_overrides[get_db] = sobrescrever_get_db
 
 
 @pytest.fixture(autouse=True)
 def banco_limpo():
-    """Recria todas as tabelas antes de cada teste e limpa ao fim."""
+    """Recria o schema a cada teste para evitar vazamento de estado entre casos."""
     Base.metadata.create_all(bind=engine_teste)
     yield
     Base.metadata.drop_all(bind=engine_teste)
@@ -65,7 +68,7 @@ def client():
 
 @pytest.fixture
 def usuario_registrado(client):
-    """Registra um usuário e retorna os dados incluindo totp_secret."""
+    """Cria um usuário padrão para cenários que dependem de autenticação."""
     resposta = client.post("/auth/registrar", json={
         "nome_completo": "Pietro Teste",
         "email": "pietro@fallsense.com",
@@ -77,5 +80,5 @@ def usuario_registrado(client):
 
 
 def get_db_direto() -> SessionTeste:
-    """Retorna uma sessão direta (sem yield) para uso nos helpers dos testes."""
+    """Retorna uma sessão direta para helpers que acessam o banco fora das rotas."""
     return SessionTeste()

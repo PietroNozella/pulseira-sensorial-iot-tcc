@@ -1,10 +1,12 @@
 import pyotp
 
 def gerar_segredo_totp() -> str:
-    # Gera uma chave secreta única de 32 caracteres para o Google Authenticator do usuário
+    # Cria o segredo compartilhado que será cadastrado no aplicativo
+    # autenticador do usuário para gerar os códigos temporários.
     return pyotp.random_base32()
 
 def verificar_totp(segredo: str, codigo_digitado: str) -> bool:
-    # Verifica se o código de 6 dígitos digitado pelo idoso/cuidador está correto
+    # Reconstrói o gerador TOTP a partir do segredo salvo e valida o código
+    # informado no momento do login.
     totp = pyotp.TOTP(segredo)
     return totp.verify(codigo_digitado)

@@ -3,29 +3,33 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from dotenv import load_dotenv, find_dotenv
 
-# 1. Carrega o nosso cofre invisível
+# Carrega as variáveis de ambiente para disponibilizar a configuração de acesso
+# ao banco de dados.
 load_dotenv(find_dotenv())
 
 DB_URL = os.getenv("DATABASE_URL")
 
-# Trava de segurança: impede iniciar o servidor sem o banco configurado
+# Sem a URL de conexão, a aplicação não consegue abrir sessões com o banco; por
+# isso a inicialização é interrompida imediatamente.
 if not DB_URL:
     raise ValueError("⚠️ ALERTA: A variável DATABASE_URL não foi encontrada no arquivo .env!")
 
-# 2. Cria o "Motor" do SQLAlchemy conectado ao Supabase
+# Cria o engine do SQLAlchemy, responsável por manter a comunicação com o banco.
 engine = create_engine(DB_URL)
 
-# 3. Cria a "Fábrica de Sessões" do banco de dados
+# Define uma fábrica de sessões. Cada sessão criada a partir daqui será usada
+# pelas rotas e serviços para executar operações no banco.
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# 4. Classe base que será usada para transformar as nossas classes Python em Tabelas reais
+# Classe base que será herdada pelos modelos ORM mapeados em tabelas.
 class Base(DeclarativeBase):
     pass
 
-# 5. O "Entregador" de conexões (Injeção de Dependência para o FastAPI)
+# Dependência usada pelo FastAPI para entregar uma sessão de banco por request.
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
-        db.close()  # Garante que a conexão será fechada mesmo se der erro na rota
+        # Fecha a sessão mesmo quando ocorre erro, evitando vazamento de conexão.
+        db.close()
