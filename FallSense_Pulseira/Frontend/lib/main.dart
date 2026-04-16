@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/two_factor_screen.dart'; 
+import 'features/auth/screens/login_screen.dart';
+import 'features/auth/screens/register_screen.dart';
+import 'features/home/presentation/screens/main_navigation_screen.dart';
+import 'features/auth/screens/two_factor_screen.dart'; 
 
 void main() {
   runApp(const MyApp());
@@ -36,7 +36,9 @@ class MyApp extends StatelessWidget {
 
         // Rota de Home
         if (settings.name == '/home') {
-          return MaterialPageRoute(builder: (context) => const HomeScreen());
+          return MaterialPageRoute(
+            builder: (context) => const MainNavigationScreen(),
+          );
         }
 
         // ROTA ESPECIAL: 2FA (Segura contra argumentos nulos)
