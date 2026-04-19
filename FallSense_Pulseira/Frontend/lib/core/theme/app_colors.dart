@@ -7,6 +7,7 @@ class AppColors {
   /// Paleta de cores primária
   static const Color primary = Color(0xFF1565C0);
   static const Color onPrimary = Color(0xFFFFFFFF);
+  static const Color primaryLight = Color(0xFFE3F2FD);
 
   /// Cores neutras para fundos, superfícies e textos
   static const Color background = Color(0xFFF9FAFB);
