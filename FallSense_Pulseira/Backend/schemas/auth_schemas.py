@@ -48,3 +48,9 @@ class ResetarSenhaPayload(BaseModel):
     token: str
     # O nome do campo permanece alinhado com o que a rota de recuperação espera.
     nova_senha: str
+
+
+class PerfilResponse(BaseModel):
+    nome_completo: str | None = None
+    email: EmailStr
+    telefone: str | None = None
