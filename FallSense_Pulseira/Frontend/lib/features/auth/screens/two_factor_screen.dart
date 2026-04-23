@@ -49,8 +49,12 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
         if (!mounted) return;
 
         final String? token = corpo['access_token'];
+        final String? nomeCompleto = corpo['nome_completo'];
         if (token != null) {
           await StorageService().saveToken(token);
+        }
+        if (nomeCompleto != null && nomeCompleto.trim().isNotEmpty) {
+          await StorageService().saveUserName(nomeCompleto.trim());
         }
 
         _exibirMensagem("Acesso autorizado!", Colors.green);

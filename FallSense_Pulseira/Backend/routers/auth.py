@@ -40,7 +40,9 @@ def registrar_usuario(payload: RegistroPayload, db: Session = Depends(get_db)):
 
     # Cria o novo usuário com senha criptografada, 2FA único e recovery codes
     novo_usuario = User(
+        nome_completo=payload.nome_completo,
         email=payload.email,
+        telefone=payload.telefone,
         hashed_password=gerar_hash(payload.senha),
         totp_secret=gerar_segredo_totp(),
         recovery_codes_hash=codigos_hash
@@ -111,6 +113,7 @@ def login_usuario(payload: LoginPayload, db: Session = Depends(get_db)):
     return {
         "mensagem": "Autenticação realizada com sucesso!",
         "access_token": token_acesso,
+        "nome_completo": usuario.nome_completo,
         "token_type": "bearer",
         "requer_2fa": False
     }

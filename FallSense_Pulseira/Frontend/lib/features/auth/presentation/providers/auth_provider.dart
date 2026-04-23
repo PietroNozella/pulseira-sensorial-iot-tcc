@@ -12,9 +12,16 @@ import '../../../../../services/storage_service.dart';
 /// Retorna uma [String] com o identificador do usuário ou um fallback estável
 /// quando o token está ausente, inválido ou incompleto.
 final authProvider = FutureProvider<String>((ref) async {
+  final storage = StorageService();
+
+  final storedUserName = await storage.getUserName();
+  if (storedUserName != null && storedUserName.trim().isNotEmpty) {
+    return storedUserName.trim();
+  }
+
   // Inicia pela fonte local de sessão para evitar chamadas remotas apenas para
   // exibição de identidade básica no perfil.
-  final token = await StorageService().getToken();
+  final token = await storage.getToken();
 
   // Fallback defensivo: garante rótulo padrão quando não há sessão ativa.
   if (token == null || token.isEmpty) {

@@ -73,7 +73,7 @@ def usuario_registrado(client):
         "nome_completo": "Pietro Teste",
         "email": "pietro@fallsense.com",
         "telefone": "11999999999",
-        "senha": "Senha123"
+        "senha": "Senha123!"
     })
     assert resposta.status_code == 201
     return resposta.json()

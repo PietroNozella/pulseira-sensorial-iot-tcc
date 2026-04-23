@@ -5,6 +5,9 @@ Cobre cadastro, login em duas etapas, bloqueio por tentativas inválidas e logou
 import pyotp
 from fastapi.testclient import TestClient
 
+from models.user import User
+from tests.conftest import get_db_direto
+
 
 # ---------------------------------------------------------------------------
 # 1. Registro
@@ -16,7 +19,7 @@ def test_registro_sucesso(client: TestClient):
         "nome_completo": "Pietro Nozella",
         "email": "pietro@fallsense.com",
         "telefone": "11999999999",
-        "senha": "Senha123"
+        "senha": "Senha123!"
     })
     assert resposta.status_code == 201
     dados = resposta.json()
@@ -26,13 +29,32 @@ def test_registro_sucesso(client: TestClient):
     assert len(dados["recovery_codes"]) == 8
 
 
+def test_registro_persiste_nome_e_telefone(client: TestClient):
+    """Cadastro deve persistir nome completo e telefone em usuarios_api."""
+    resposta = client.post("/auth/registrar", json={
+        "nome_completo": "Pietro Nozella",
+        "email": "pietro@fallsense.com",
+        "telefone": "11999999999",
+        "senha": "Senha123!"
+    })
+    assert resposta.status_code == 201
+
+    db = get_db_direto()
+    usuario = db.query(User).filter(User.email == "pietro@fallsense.com").first()
+    db.close()
+
+    assert usuario is not None
+    assert usuario.nome_completo == "Pietro Nozella"
+    assert usuario.telefone == "11999999999"
+
+
 def test_registro_email_duplicado(client: TestClient, usuario_registrado):
     """Segundo cadastro com o mesmo e-mail deve retornar 400."""
     resposta = client.post("/auth/registrar", json={
         "nome_completo": "Pietro Nozella",
         "email": "pietro@fallsense.com",
         "telefone": "11999999999",
-        "senha": "Senha123"
+        "senha": "Senha123!"
     })
     assert resposta.status_code == 400
 
@@ -67,7 +89,7 @@ def test_login_primeira_etapa_retorna_requer_2fa(client: TestClient, usuario_reg
     """Login com senha correta sem 2FA deve retornar requer_2fa=True."""
     resposta = client.post("/auth/login", json={
         "email": "pietro@fallsense.com",
-        "senha": "Senha123"
+        "senha": "Senha123!"
     })
     assert resposta.status_code == 200
     assert resposta.json()["requer_2fa"] is True
@@ -80,12 +102,13 @@ def test_login_completo_com_2fa(client: TestClient, usuario_registrado):
 
     resposta = client.post("/auth/login", json={
         "email": "pietro@fallsense.com",
-        "senha": "Senha123",
+        "senha": "Senha123!",
         "codigo_2fa": codigo
     })
     assert resposta.status_code == 200
     dados = resposta.json()
     assert "access_token" in dados
+    assert dados["nome_completo"] == "Pietro Teste"
     assert dados["requer_2fa"] is False
 
 
@@ -102,7 +125,7 @@ def test_login_2fa_incorreto(client: TestClient, usuario_registrado):
     """Código 2FA inválido deve retornar 400."""
     resposta = client.post("/auth/login", json={
         "email": "pietro@fallsense.com",
-        "senha": "Senha123",
+        "senha": "Senha123!",
         "codigo_2fa": "000000"
     })
     assert resposta.status_code == 400
@@ -124,7 +147,7 @@ def test_bloqueio_por_forca_bruta(client: TestClient, usuario_registrado):
     # ser barrada enquanto o bloqueio estiver ativo.
     resposta = client.post("/auth/login", json={
         "email": "pietro@fallsense.com",
-        "senha": "Senha123"
+        "senha": "Senha123!"
     })
     assert resposta.status_code == 429
 
@@ -139,7 +162,7 @@ def _fazer_login_completo(client: TestClient, usuario_registrado) -> str:
     codigo = pyotp.TOTP(totp_secret).now()
     resposta = client.post("/auth/login", json={
         "email": "pietro@fallsense.com",
-        "senha": "Senha123",
+        "senha": "Senha123!",
         "codigo_2fa": codigo
     })
     return resposta.json()["access_token"]

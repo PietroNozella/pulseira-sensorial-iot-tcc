@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/device_list_item_widget.dart';
 import '../widgets/fall_simulation_card_widget.dart';
 import '../widgets/home_header_widget.dart';
@@ -10,7 +12,7 @@ import '../widgets/home_header_widget.dart';
 /// Centraliza os principais pontos de interação do usuário no contexto do TCC:
 /// identificação do usuário, status resumido do dispositivo IoT e um painel de
 /// simulação para validar o fluxo de detecção de queda em ambiente controlado.
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   /// Cria a HomeScreen com configuração imutável para renderização previsível.
   const HomeScreen({
     super.key,
@@ -21,14 +23,20 @@ class HomeScreen extends StatelessWidget {
   /// A organização em lista vertical facilita evolução incremental de conteúdo
   /// sem acoplamento entre os componentes, alinhando com a arquitetura em camadas.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userNameAsync = ref.watch(authProvider);
+    final userName = userNameAsync.maybeWhen(
+      data: (value) => value,
+      orElse: () => 'Usuario',
+    );
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: ListView(
           children: <Widget>[
             // Bloco de contexto do usuário: saudação e ações rápidas do topo.
-            const HomeHeaderWidget(userName: 'Usuario'),
+            HomeHeaderWidget(userName: userName),
             const SizedBox(height: 20),
 
             // Bloco de status operacional: resumo visual da pulseira conectada.

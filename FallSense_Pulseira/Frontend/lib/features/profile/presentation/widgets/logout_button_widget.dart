@@ -16,7 +16,7 @@ class LogoutButtonWidget extends StatelessWidget {
   Future<void> _fazerLogout(BuildContext context) async {
     // Garante a invalidação da sessão local antes de qualquer redirecionamento,
     // evitando que telas protegidas sejam reabertas com credenciais antigas.
-    await StorageService().deleteToken();
+    await StorageService().clearSession();
 
     if (!context.mounted) return;
 
