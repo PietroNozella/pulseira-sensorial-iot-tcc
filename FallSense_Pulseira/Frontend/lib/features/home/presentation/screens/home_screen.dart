@@ -25,10 +25,19 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userNameAsync = ref.watch(authProvider);
+    final monitoredPeopleAsync = ref.watch(monitoredPeopleProvider);
     final userName = userNameAsync.maybeWhen(
       data: (value) => value,
       orElse: () => 'Usuario',
     );
+    final monitoredPeople = monitoredPeopleAsync.maybeWhen(
+      data: (value) => value,
+      orElse: () => const <MonitoredPerson>[],
+    );
+    final hasMonitoredPerson = monitoredPeople.isNotEmpty;
+    final monitoredPersonName = hasMonitoredPerson
+        ? monitoredPeople.first.name
+        : 'Nenhuma pessoa monitorada';
 
     return SafeArea(
       child: Padding(
@@ -40,7 +49,10 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 20),
 
             // Bloco de status operacional: resumo visual da pulseira conectada.
-            const DeviceListItemWidget(),
+            DeviceListItemWidget(
+              monitoredPersonName: monitoredPersonName,
+              hasMonitoredPerson: hasMonitoredPerson,
+            ),
             const SizedBox(height: 16),
 
             // Bloco de entrada para o painel principal da funcionalidade crítica.

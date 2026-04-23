@@ -15,6 +15,16 @@ class AuthUserProfile {
   final String email;
 }
 
+class MonitoredPerson {
+  const MonitoredPerson({
+    required this.id,
+    required this.name,
+  });
+
+  final int id;
+  final String name;
+}
+
 /// Provider responsável por resolver o perfil do usuário autenticado.
 final userProfileProvider = FutureProvider<AuthUserProfile>((ref) async {
   final storage = StorageService();
@@ -64,6 +74,35 @@ final userProfileProvider = FutureProvider<AuthUserProfile>((ref) async {
 final authProvider = FutureProvider<String>((ref) async {
   final profile = await ref.watch(userProfileProvider.future);
   return profile.name;
+});
+
+final monitoredPeopleProvider = FutureProvider<List<MonitoredPerson>>((ref) async {
+  final token = await StorageService().getToken();
+  if (token == null || token.isEmpty) {
+    return const <MonitoredPerson>[];
+  }
+
+  try {
+    final resultado = await ApiService().obterMonitorados(token);
+    final status = resultado['status'] as int;
+    final body = resultado['body'];
+
+    if (status == 200 && body is List) {
+      return body
+          .whereType<Map<String, dynamic>>()
+          .map((item) => MonitoredPerson(
+                id: item['id'] as int,
+                name: (item['nome_completo'] as String?)?.trim().isNotEmpty == true
+                    ? (item['nome_completo'] as String).trim()
+                    : 'Pessoa monitorada',
+              ))
+          .toList();
+    }
+  } catch (_) {
+    return const <MonitoredPerson>[];
+  }
+
+  return const <MonitoredPerson>[];
 });
 
 Future<String> _extrairEmailDoToken(String token) async {
