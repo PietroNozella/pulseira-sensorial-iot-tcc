@@ -94,3 +94,19 @@ class Pulseira(Base):
     versao_firmware = Column(String, nullable=True)
     status_ativo = Column(Boolean, default=True)
     registrado_em = Column(DateTime, server_default=func.now())
+
+
+class TelemetriaEvento(Base):
+    """Evento de telemetria emitido por uma pulseira."""
+    __tablename__ = "telemetria_evento"
+
+    id = Column(Integer, primary_key=True, index=True)
+    mac_address = Column(
+        String,
+        ForeignKey("pulseira.mac_address", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    tipo_evento = Column(String, nullable=True)
+    coordenadas_gps = Column(String, nullable=True)
+    data_evento = Column(DateTime, server_default=func.now(), nullable=False)
