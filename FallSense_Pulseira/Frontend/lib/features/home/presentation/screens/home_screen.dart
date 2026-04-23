@@ -25,19 +25,30 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userNameAsync = ref.watch(authProvider);
-    final monitoredPeopleAsync = ref.watch(monitoredPeopleProvider);
+    final wearableDevicesAsync = ref.watch(wearableDevicesProvider);
     final userName = userNameAsync.maybeWhen(
       data: (value) => value,
       orElse: () => 'Usuario',
     );
-    final monitoredPeople = monitoredPeopleAsync.maybeWhen(
+    final wearableDevices = wearableDevicesAsync.maybeWhen(
       data: (value) => value,
-      orElse: () => const <MonitoredPerson>[],
+      orElse: () => const <WearableDevice>[],
     );
-    final hasMonitoredPerson = monitoredPeople.isNotEmpty;
-    final monitoredPersonName = hasMonitoredPerson
-        ? monitoredPeople.first.name
-        : 'Nenhuma pessoa monitorada';
+    final hasDevice = wearableDevices.isNotEmpty;
+    final primaryDevice = hasDevice ? wearableDevices.first : null;
+    final title = hasDevice
+        ? (primaryDevice!.monitoredPersonName.isNotEmpty
+            ? primaryDevice.monitoredPersonName
+            : 'Pulseira vinculada')
+        : 'Nenhuma pulseira cadastrada';
+    final subtitle = hasDevice
+        ? primaryDevice!.macAddress
+        : 'Vincule uma pulseira a uma pessoa monitorada';
+    final supportingText = hasDevice
+        ? (primaryDevice!.firmwareVersion.isNotEmpty
+            ? primaryDevice.firmwareVersion
+            : 'N/D')
+        : 'Pendente';
 
     return SafeArea(
       child: Padding(
@@ -50,8 +61,11 @@ class HomeScreen extends ConsumerWidget {
 
             // Bloco de status operacional: resumo visual da pulseira conectada.
             DeviceListItemWidget(
-              monitoredPersonName: monitoredPersonName,
-              hasMonitoredPerson: hasMonitoredPerson,
+              title: title,
+              subtitle: subtitle,
+              supportingText: supportingText,
+              hasDevice: hasDevice,
+              isActive: primaryDevice?.isActive ?? false,
             ),
             const SizedBox(height: 16),
 

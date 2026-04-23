@@ -5,7 +5,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from models.user import LogAuditoria, TokenRevogado  # noqa: F401
-from routers import auth, pessoa_monitorada, recuperacao
+from routers import auth, pessoa_monitorada, pulseira, recuperacao
 from security.database import Base, engine, get_db
 
 # Inicializa a aplicação principal da API.
@@ -30,6 +30,7 @@ _ = (Base, engine)
 app.include_router(auth.router, prefix="/auth", tags=["Autenticação"])
 app.include_router(recuperacao.router, prefix="/auth", tags=["Recuperação de Senha"])
 app.include_router(pessoa_monitorada.router, prefix="/monitorados", tags=["Pessoa Monitorada"])
+app.include_router(pulseira.router, prefix="/pulseiras", tags=["Pulseira"])
 
 
 @app.get("/teste-banco", tags=["Teste"])

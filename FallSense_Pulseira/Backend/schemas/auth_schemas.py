@@ -63,3 +63,17 @@ class PessoaMonitoradaPayload(BaseModel):
 class PessoaMonitoradaResponse(BaseModel):
     id: int
     nome_completo: str | None = None
+
+
+class PulseiraPayload(BaseModel):
+    mac_address: str
+    pessoa_monitorada_id: int
+    versao_firmware: str | None = None
+
+
+class PulseiraResponse(BaseModel):
+    mac_address: str
+    pessoa_monitorada_id: int | None = None
+    pessoa_monitorada_nome: str | None = None
+    versao_firmware: str | None = None
+    status_ativo: bool

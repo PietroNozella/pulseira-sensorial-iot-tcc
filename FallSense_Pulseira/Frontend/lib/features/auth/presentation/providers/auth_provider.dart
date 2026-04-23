@@ -25,6 +25,22 @@ class MonitoredPerson {
   final String name;
 }
 
+class WearableDevice {
+  const WearableDevice({
+    required this.macAddress,
+    required this.monitoredPersonId,
+    required this.monitoredPersonName,
+    required this.firmwareVersion,
+    required this.isActive,
+  });
+
+  final String macAddress;
+  final int? monitoredPersonId;
+  final String monitoredPersonName;
+  final String firmwareVersion;
+  final bool isActive;
+}
+
 /// Provider responsável por resolver o perfil do usuário autenticado.
 final userProfileProvider = FutureProvider<AuthUserProfile>((ref) async {
   final storage = StorageService();
@@ -103,6 +119,38 @@ final monitoredPeopleProvider = FutureProvider<List<MonitoredPerson>>((ref) asyn
   }
 
   return const <MonitoredPerson>[];
+});
+
+final wearableDevicesProvider = FutureProvider<List<WearableDevice>>((ref) async {
+  final token = await StorageService().getToken();
+  if (token == null || token.isEmpty) {
+    return const <WearableDevice>[];
+  }
+
+  try {
+    final resultado = await ApiService().obterPulseiras(token);
+    final status = resultado['status'] as int;
+    final body = resultado['body'];
+
+    if (status == 200 && body is List) {
+      return body
+          .whereType<Map<String, dynamic>>()
+          .map((item) => WearableDevice(
+                macAddress: (item['mac_address'] as String?)?.trim() ?? '',
+                monitoredPersonId: item['pessoa_monitorada_id'] as int?,
+                monitoredPersonName:
+                    (item['pessoa_monitorada_nome'] as String?)?.trim() ?? '',
+                firmwareVersion: (item['versao_firmware'] as String?)?.trim() ?? '',
+                isActive: item['status_ativo'] as bool? ?? false,
+              ))
+          .where((device) => device.macAddress.isNotEmpty)
+          .toList();
+    }
+  } catch (_) {
+    return const <WearableDevice>[];
+  }
+
+  return const <WearableDevice>[];
 });
 
 Future<String> _extrairEmailDoToken(String token) async {
