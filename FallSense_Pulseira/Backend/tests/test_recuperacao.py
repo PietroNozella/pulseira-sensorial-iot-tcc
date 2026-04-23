@@ -3,10 +3,9 @@ Testes de recuperação de senha — cobre requisitos 2.1 a 2.7 do checklist de 
 Envio de e-mail é simulado (mock) para não depender de SMTP real.
 """
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
 from models.user import TokenRecuperacao, LogAuditoria
 from tests.conftest import get_db_direto
@@ -16,7 +15,7 @@ from tests.conftest import get_db_direto
 # 2.1 / 2.2 / 2.3 — Solicitação de recuperação
 # ---------------------------------------------------------------------------
 
-@patch("routers.recuperacao.FastMail.send_message", new_callable=AsyncMock)
+@patch("routers.recuperacao.enviar_email_brevo")
 def test_esqueci_senha_usuario_existente(mock_mail, client: TestClient, usuario_registrado):
     """Solicitação para e-mail cadastrado deve gerar token e retornar 200."""
     resposta = client.post("/auth/esqueci-senha", json={"email": "pietro@fallsense.com"})
@@ -35,7 +34,7 @@ def test_esqueci_senha_usuario_existente(mock_mail, client: TestClient, usuario_
     assert token.expiracao > datetime.utcnow()
 
 
-@patch("routers.recuperacao.FastMail.send_message", new_callable=AsyncMock)
+@patch("routers.recuperacao.enviar_email_brevo")
 def test_esqueci_senha_email_inexistente_resposta_generica(mock_mail, client: TestClient):
     """E-mail não cadastrado deve retornar resposta genérica (não vazar informação)."""
     resposta = client.post("/auth/esqueci-senha", json={"email": "naoexiste@fallsense.com"})
@@ -50,7 +49,7 @@ def test_esqueci_senha_email_inexistente_resposta_generica(mock_mail, client: Te
 # 2.4 / 2.5 — Reset de senha
 # ---------------------------------------------------------------------------
 
-@patch("routers.recuperacao.FastMail.send_message", new_callable=AsyncMock)
+@patch("routers.recuperacao.enviar_email_brevo")
 def test_resetar_senha_token_valido(mock_mail, client: TestClient, usuario_registrado):
     """Reset com token válido deve atualizar a senha e retornar 200."""
     client.post("/auth/esqueci-senha", json={"email": "pietro@fallsense.com"})
@@ -77,7 +76,7 @@ def test_resetar_senha_token_valido(mock_mail, client: TestClient, usuario_regis
     assert token_atualizado.usado is True
 
 
-@patch("routers.recuperacao.FastMail.send_message", new_callable=AsyncMock)
+@patch("routers.recuperacao.enviar_email_brevo")
 def test_resetar_senha_token_ja_usado(mock_mail, client: TestClient, usuario_registrado):
     """Reutilização do mesmo token deve ser rejeitada com 400 (req. 2.4)."""
     client.post("/auth/esqueci-senha", json={"email": "pietro@fallsense.com"})
@@ -131,7 +130,7 @@ def test_resetar_senha_token_inexistente(client: TestClient, usuario_registrado)
 # 2.6 / 2.7 — Logs de auditoria
 # ---------------------------------------------------------------------------
 
-@patch("routers.recuperacao.FastMail.send_message", new_callable=AsyncMock)
+@patch("routers.recuperacao.enviar_email_brevo")
 def test_log_gerado_na_solicitacao(mock_mail, client: TestClient, usuario_registrado):
     """Solicitação de recuperação deve gerar entrada em LogAuditoria (req. 2.6)."""
     client.post("/auth/esqueci-senha", json={"email": "pietro@fallsense.com"})
@@ -146,7 +145,7 @@ def test_log_gerado_na_solicitacao(mock_mail, client: TestClient, usuario_regist
     assert log.status == "SUCESSO"
 
 
-@patch("routers.recuperacao.FastMail.send_message", new_callable=AsyncMock)
+@patch("routers.recuperacao.enviar_email_brevo")
 def test_log_gerado_no_reset(mock_mail, client: TestClient, usuario_registrado):
     """Reset bem-sucedido deve gerar entrada em LogAuditoria (req. 2.7)."""
     client.post("/auth/esqueci-senha", json={"email": "pietro@fallsense.com"})
