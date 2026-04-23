@@ -13,11 +13,13 @@ class DeviceStatusWidget extends StatelessWidget {
   /// representar o estado conectado de forma semanticamente consistente.
   const DeviceStatusWidget({
     this.color = AppColors.success,
+    this.label = 'Conectada',
     super.key,
   });
 
   /// Cor aplicada ao marcador e ao texto de status.
   final Color color;
+  final String label;
 
   /// Monta o selo de status com ícone e texto em layout horizontal compacto.
   ///
@@ -39,7 +41,7 @@ class DeviceStatusWidget extends StatelessWidget {
 
         // Bloco textual de confirmação explícita para reduzir ambiguidade do ícone.
         Text(
-          'Conectada',
+          label,
           style: TextStyle(
             color: color,
             fontSize: 13,

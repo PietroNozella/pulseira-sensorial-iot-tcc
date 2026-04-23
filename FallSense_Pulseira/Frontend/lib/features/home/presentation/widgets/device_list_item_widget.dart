@@ -3,19 +3,27 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'device_status_widget.dart';
 
-/// Card de resumo do contexto principal exibido na Home.
+/// Card de resumo do dispositivo principal exibido na Home.
 class DeviceListItemWidget extends StatelessWidget {
   const DeviceListItemWidget({
-    required this.monitoredPersonName,
-    required this.hasMonitoredPerson,
+    required this.title,
+    required this.subtitle,
+    required this.supportingText,
+    required this.hasDevice,
+    required this.isActive,
     super.key,
   });
 
-  final String monitoredPersonName;
-  final bool hasMonitoredPerson;
+  final String title;
+  final String subtitle;
+  final String supportingText;
+  final bool hasDevice;
+  final bool isActive;
 
   @override
   Widget build(BuildContext context) {
+    final statusColor = isActive ? AppColors.white : Colors.white70;
+
     return Container(
       constraints: const BoxConstraints(minHeight: 140),
       padding: const EdgeInsets.all(20),
@@ -49,19 +57,31 @@ class DeviceListItemWidget extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        monitoredPersonName,
+                        title,
                         style: const TextStyle(
                           color: AppColors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                       const SizedBox(height: 8),
-                      if (hasMonitoredPerson)
-                        const DeviceStatusWidget(color: AppColors.white)
+                      if (hasDevice)
+                        DeviceStatusWidget(
+                          color: statusColor,
+                          label: isActive ? 'Conectada' : 'Inativa',
+                        )
                       else
                         const Text(
-                          'Cadastre a primeira pessoa monitorada',
+                          'Cadastre a primeira pulseira',
                           style: TextStyle(
                             color: AppColors.white,
                             fontSize: 13,
@@ -80,7 +100,7 @@ class DeviceListItemWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               Text(
-                hasMonitoredPerson ? 'Bateria' : 'Status',
+                hasDevice ? 'Firmware' : 'Status',
                 style: const TextStyle(
                   color: AppColors.white,
                   fontSize: 12,
@@ -91,14 +111,12 @@ class DeviceListItemWidget extends StatelessWidget {
               Row(
                 children: <Widget>[
                   Icon(
-                    hasMonitoredPerson
-                        ? Icons.battery_5_bar_rounded
-                        : Icons.info_outline_rounded,
+                    hasDevice ? Icons.memory_rounded : Icons.info_outline_rounded,
                     color: AppColors.white,
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    hasMonitoredPerson ? '85%' : 'Pendente',
+                    supportingText,
                     style: const TextStyle(
                       color: AppColors.white,
                       fontSize: 16,

@@ -78,3 +78,19 @@ class PessoaMonitorada(Base):
     )
     nome_completo = Column(String, nullable=True)
     consentimento_lgpd_data = Column(DateTime, nullable=True)
+
+
+class Pulseira(Base):
+    """Pulseira vinculada a uma pessoa monitorada."""
+    __tablename__ = "pulseira"
+
+    mac_address = Column(String, primary_key=True, index=True)
+    pessoa_monitorada_id = Column(
+        Integer,
+        ForeignKey("pessoa_monitorada.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    versao_firmware = Column(String, nullable=True)
+    status_ativo = Column(Boolean, default=True)
+    registrado_em = Column(DateTime, server_default=func.now())
