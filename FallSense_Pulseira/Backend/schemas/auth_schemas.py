@@ -54,3 +54,12 @@ class PerfilResponse(BaseModel):
     nome_completo: str | None = None
     email: EmailStr
     telefone: str | None = None
+
+
+class PessoaMonitoradaPayload(BaseModel):
+    nome_completo: str
+
+
+class PessoaMonitoradaResponse(BaseModel):
+    id: int
+    nome_completo: str | None = None

@@ -63,3 +63,18 @@ class TokenRecuperacao(Base):
     # Define quando o link de recuperação expira (ex: 1 hora)
     expiracao = Column(DateTime, nullable=False)
     usado = Column(Boolean, default=False)
+
+
+class PessoaMonitorada(Base):
+    """Primeira entidade de dominio vinculada ao usuario autenticado."""
+    __tablename__ = "pessoa_monitorada"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_responsavel_id = Column(
+        Integer,
+        ForeignKey("usuarios_api.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    nome_completo = Column(String, nullable=True)
+    consentimento_lgpd_data = Column(DateTime, nullable=True)
