@@ -13,7 +13,9 @@ class User(Base):
     __tablename__ = "usuarios_api"
 
     id = Column(Integer, primary_key=True, index=True)
+    nome_completo = Column(String, nullable=True)
     email = Column(String, unique=True, index=True, nullable=False)
+    telefone = Column(String, nullable=True)
     hashed_password = Column(String, nullable=False)
 
     # 2FA

@@ -54,8 +54,12 @@ class _LoginScreenState extends State<LoginScreen> {
         } else {
           // Salva o token JWT caso o backend retorne sem exigir 2FA
           final String? token = corpo['access_token'];
+          final String? nomeCompleto = corpo['nome_completo'];
           if (token != null) {
             await StorageService().saveToken(token);
+          }
+          if (nomeCompleto != null && nomeCompleto.trim().isNotEmpty) {
+            await StorageService().saveUserName(nomeCompleto.trim());
           }
           _irParaHome();
         }
