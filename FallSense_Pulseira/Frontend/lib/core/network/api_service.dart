@@ -68,4 +68,15 @@ class ApiService {
     );
     return {"status": response.statusCode, "body": jsonDecode(response.body)};
   }
+
+  Future<Map<String, dynamic>> obterPerfil(String token) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/me'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+    return {"status": response.statusCode, "body": jsonDecode(response.body)};
+  }
 }

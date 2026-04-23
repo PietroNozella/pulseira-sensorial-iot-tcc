@@ -23,13 +23,11 @@ class ProfileHeaderWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Observa o provider para manter o nome sincronizado com o estado de
     // autenticação e reação automática da interface em atualizações.
-    final userNameAsync = ref.watch(authProvider);
+    final userProfileAsync = ref.watch(userProfileProvider);
 
-    // Define fallback para garantir experiência estável quando o dado ainda
-    // está carregando ou em estado de erro, evitando quebra visual do cabeçalho.
-    final userName = userNameAsync.maybeWhen(
+    final userProfile = userProfileAsync.maybeWhen(
       data: (value) => value,
-      orElse: () => 'Usuario',
+      orElse: () => const AuthUserProfile(name: 'Usuario', email: ''),
     );
 
     return Container(
@@ -57,7 +55,7 @@ class ProfileHeaderWidget extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  userName,
+                  userProfile.name,
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
@@ -65,9 +63,11 @@ class ProfileHeaderWidget extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Responsável Principal',
-                  style: TextStyle(
+                Text(
+                  userProfile.email.isNotEmpty
+                      ? userProfile.email
+                      : 'Responsável Principal',
+                  style: const TextStyle(
                     fontSize: 15,
                     color: AppColors.textSecondary,
                   ),

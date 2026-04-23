@@ -191,3 +191,16 @@ def test_logout_sem_token(client: TestClient):
     """Logout sem header Authorization deve retornar 422."""
     resposta = client.post("/auth/logout")
     assert resposta.status_code == 422
+
+
+def test_obter_perfil_usuario_autenticado(client: TestClient, usuario_registrado):
+    """Endpoint /me deve retornar os dados persistidos do usuário autenticado."""
+    token = _fazer_login_completo(client, usuario_registrado)
+
+    resposta = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert resposta.status_code == 200
+
+    dados = resposta.json()
+    assert dados["nome_completo"] == "Pietro Teste"
+    assert dados["email"] == "pietro@fallsense.com"
+    assert dados["telefone"] == "11999999999"

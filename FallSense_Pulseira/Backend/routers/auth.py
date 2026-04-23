@@ -12,7 +12,7 @@ from models.user import User, LogAuditoria
 from security.hashing import gerar_hash, verificar_senha
 from security.jwt_handler import criar_token_jwt, verificar_token_jwt, revogar_token
 from security.totp_handler import gerar_segredo_totp, verificar_totp
-from schemas.auth_schemas import RegistroPayload, LoginPayload
+from schemas.auth_schemas import PerfilResponse, RegistroPayload, LoginPayload
 
 
 def _gerar_recovery_codes() -> tuple[list[str], str]:
@@ -147,3 +147,25 @@ def logout_usuario(
     db.commit()
 
     return {"mensagem": "Logout realizado com sucesso. Token invalidado."}
+
+
+@router.get("/me", response_model=PerfilResponse)
+def obter_perfil_usuario(
+    authorization: str = Header(..., description="Bearer <token>"),
+    db: Session = Depends(get_db)
+):
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=400, detail="Formato de token inválido.")
+
+    token = authorization.removeprefix("Bearer ").strip()
+    email = verificar_token_jwt(token, db)
+    usuario = db.query(User).filter(User.email == email).first()
+
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+    return PerfilResponse(
+        nome_completo=usuario.nome_completo,
+        email=usuario.email,
+        telefone=usuario.telefone
+    )
