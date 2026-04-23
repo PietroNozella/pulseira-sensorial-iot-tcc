@@ -1,5 +1,15 @@
 # FallSense — Sistema de Detecção de Quedas para Idosos
 
+![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=flat-square&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.135-009688?style=flat-square&logo=fastapi&logoColor=white)
+![Flutter](https://img.shields.io/badge/Flutter-Mobile-02569B?style=flat-square&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-3.10-0175C2?style=flat-square&logo=dart&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=flat-square&logo=supabase&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Container-2496ED?style=flat-square&logo=docker&logoColor=white)
+![ESP32--C3](https://img.shields.io/badge/ESP32--C3-IoT-E7352C?style=flat-square&logo=espressif&logoColor=white)
+![MQTT](https://img.shields.io/badge/MQTT-TLS-660066?style=flat-square&logo=mqtt&logoColor=white)
+
 Sistema integrado de detecção de quedas composto por pulseira IoT, backend API e aplicativo móvel. Desenvolvido como Trabalho de Conclusão de Curso.
 
 **Equipe:** Pietro Nozella, Gustavo Quintiliano, Diego Alves e Bruno Shiraishi
