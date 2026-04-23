@@ -41,6 +41,24 @@ class WearableDevice {
   final bool isActive;
 }
 
+class TelemetryEvent {
+  const TelemetryEvent({
+    required this.id,
+    required this.type,
+    required this.macAddress,
+    required this.monitoredPersonName,
+    required this.gpsCoordinates,
+    required this.occurredAt,
+  });
+
+  final int id;
+  final String type;
+  final String macAddress;
+  final String monitoredPersonName;
+  final String gpsCoordinates;
+  final DateTime? occurredAt;
+}
+
 /// Provider responsável por resolver o perfil do usuário autenticado.
 final userProfileProvider = FutureProvider<AuthUserProfile>((ref) async {
   final storage = StorageService();
@@ -153,6 +171,38 @@ final wearableDevicesProvider = FutureProvider<List<WearableDevice>>((ref) async
   return const <WearableDevice>[];
 });
 
+final telemetryEventsProvider = FutureProvider<List<TelemetryEvent>>((ref) async {
+  final token = await StorageService().getToken();
+  if (token == null || token.isEmpty) {
+    return const <TelemetryEvent>[];
+  }
+
+  try {
+    final resultado = await ApiService().obterEventos(token);
+    final status = resultado['status'] as int;
+    final body = resultado['body'];
+
+    if (status == 200 && body is List) {
+      return body
+          .whereType<Map<String, dynamic>>()
+          .map((item) => TelemetryEvent(
+                id: item['id'] as int,
+                type: (item['tipo_evento'] as String?)?.trim() ?? 'EVENTO',
+                macAddress: (item['mac_address'] as String?)?.trim() ?? '',
+                monitoredPersonName:
+                    (item['pessoa_monitorada_nome'] as String?)?.trim() ?? '',
+                gpsCoordinates: (item['coordenadas_gps'] as String?)?.trim() ?? '',
+                occurredAt: _parseDateTime(item['data_evento']),
+              ))
+          .toList();
+    }
+  } catch (_) {
+    return const <TelemetryEvent>[];
+  }
+
+  return const <TelemetryEvent>[];
+});
+
 Future<String> _extrairEmailDoToken(String token) async {
   final tokenParts = token.split('.');
   if (tokenParts.length < 2) {
@@ -173,4 +223,16 @@ Future<String> _extrairEmailDoToken(String token) async {
   }
 
   return '';
+}
+
+DateTime? _parseDateTime(Object? value) {
+  if (value is! String || value.trim().isEmpty) {
+    return null;
+  }
+
+  try {
+    return DateTime.parse(value);
+  } catch (_) {
+    return null;
+  }
 }

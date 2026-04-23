@@ -101,4 +101,15 @@ class ApiService {
     );
     return {"status": response.statusCode, "body": jsonDecode(response.body)};
   }
+
+  Future<Map<String, dynamic>> obterEventos(String token) async {
+    final response = await http.get(
+      Uri.parse('https://fallsense-api.onrender.com/eventos'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+    return {"status": response.statusCode, "body": jsonDecode(response.body)};
+  }
 }

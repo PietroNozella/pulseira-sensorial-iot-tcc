@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 from pydantic import BaseModel, EmailStr, field_validator
 
@@ -77,3 +78,18 @@ class PulseiraResponse(BaseModel):
     pessoa_monitorada_nome: str | None = None
     versao_firmware: str | None = None
     status_ativo: bool
+
+
+class TelemetriaEventoPayload(BaseModel):
+    mac_address: str
+    tipo_evento: str
+    coordenadas_gps: str | None = None
+
+
+class TelemetriaEventoResponse(BaseModel):
+    id: int
+    mac_address: str
+    tipo_evento: str | None = None
+    coordenadas_gps: str | None = None
+    data_evento: datetime
+    pessoa_monitorada_nome: str | None = None

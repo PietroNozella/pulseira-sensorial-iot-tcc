@@ -6,6 +6,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/device_list_item_widget.dart';
 import '../widgets/fall_simulation_card_widget.dart';
 import '../widgets/home_header_widget.dart';
+import '../widgets/recent_events_widget.dart';
 
 /// Tela inicial do aplicativo após autenticação.
 ///
@@ -26,6 +27,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userNameAsync = ref.watch(authProvider);
     final wearableDevicesAsync = ref.watch(wearableDevicesProvider);
+    final telemetryEventsAsync = ref.watch(telemetryEventsProvider);
     final userName = userNameAsync.maybeWhen(
       data: (value) => value,
       orElse: () => 'Usuario',
@@ -49,6 +51,10 @@ class HomeScreen extends ConsumerWidget {
             ? primaryDevice.firmwareVersion
             : 'N/D')
         : 'Pendente';
+    final telemetryEvents = telemetryEventsAsync.maybeWhen(
+      data: (value) => value,
+      orElse: () => const <TelemetryEvent>[],
+    );
 
     return SafeArea(
       child: Padding(
@@ -67,6 +73,8 @@ class HomeScreen extends ConsumerWidget {
               hasDevice: hasDevice,
               isActive: primaryDevice?.isActive ?? false,
             ),
+            const SizedBox(height: 16),
+            RecentEventsWidget(events: telemetryEvents),
             const SizedBox(height: 16),
 
             // Bloco de entrada para o painel principal da funcionalidade crítica.
