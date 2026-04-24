@@ -30,7 +30,7 @@ class HomeHeaderWidget extends StatelessWidget {
         // flexível para evitar truncamento prematuro em telas menores.
         Expanded(
           child: Text(
-            'Olá, $userName!',
+            'Olá, ${userName.trim().split(' ').first}!',
             style: const TextStyle(
               color: AppColors.textPrimary,
               fontSize: 24,

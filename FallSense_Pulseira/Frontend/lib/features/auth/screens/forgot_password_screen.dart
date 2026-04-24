@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/network/api_service.dart';
+import '../../../core/theme/app_colors.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -24,7 +25,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final email = _emailController.text.trim();
 
     if (email.isEmpty) {
-      _exibirMensagem("Informe seu e-mail.", Colors.orange);
+      _exibirMensagem("Informe seu e-mail.", AppColors.warning);
       return;
     }
 
@@ -36,15 +37,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (!mounted) return;
 
       if (resultado['status'] == 200) {
-        _exibirMensagem("Se o e-mail estiver cadastrado, o código foi enviado.", Colors.green);
+        _exibirMensagem("Se o e-mail estiver cadastrado, o código foi enviado.", AppColors.success);
         // Avança para a etapa de inserir token + nova senha
         setState(() => _etapaReset = true);
       } else {
         final erro = resultado['body']['detail'] ?? "Erro ao solicitar recuperação.";
-        _exibirMensagem(erro.toString(), Colors.red);
+        _exibirMensagem(erro.toString(), AppColors.error);
       }
     } catch (e) {
-      _exibirMensagem("Erro de conexão. Verifique o servidor.", Colors.red);
+      _exibirMensagem("Erro de conexão. Verifique o servidor.", AppColors.error);
     } finally {
       if (mounted) setState(() => _carregando = false);
     }
@@ -57,12 +58,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final confirmeSenha = _confirmeSenhaController.text;
 
     if (token.isEmpty || novaSenha.isEmpty) {
-      _exibirMensagem("Preencha o código e a nova senha.", Colors.orange);
+      _exibirMensagem("Preencha o código e a nova senha.", AppColors.warning);
       return;
     }
 
     if (novaSenha != confirmeSenha) {
-      _exibirMensagem("As senhas não coincidem.", Colors.orange);
+      _exibirMensagem("As senhas não coincidem.", AppColors.warning);
       return;
     }
 
@@ -77,15 +78,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (!mounted) return;
 
       if (resultado['status'] == 200) {
-        _exibirMensagem("Senha alterada com sucesso!", Colors.green);
+        _exibirMensagem("Senha alterada com sucesso!", AppColors.success);
         // Volta para o login após reset bem-sucedido
         Navigator.pop(context);
       } else {
         final erro = resultado['body']['detail'] ?? "Erro ao resetar senha.";
-        _exibirMensagem(erro.toString(), Colors.red);
+        _exibirMensagem(erro.toString(), AppColors.error);
       }
     } catch (e) {
-      _exibirMensagem("Erro de conexão. Verifique o servidor.", Colors.red);
+      _exibirMensagem("Erro de conexão. Verifique o servidor.", AppColors.error);
     } finally {
       if (mounted) setState(() => _carregando = false);
     }
@@ -103,8 +104,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       appBar: AppBar(
         title: const Text("Recuperar Senha"),
         centerTitle: true,
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(25.0),
@@ -112,7 +113,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: Column(
             children: [
               const SizedBox(height: 30),
-              const Icon(Icons.lock_reset, size: 80, color: Colors.blueAccent),
+              const Icon(Icons.lock_reset, size: 80, color: AppColors.primary),
               const SizedBox(height: 20),
 
               // Etapa 1: campo de e-mail
@@ -120,7 +121,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const Text(
                   "Informe o e-mail cadastrado.\nEnviaremos um código de recuperação.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 15, color: Colors.black54),
+                  style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 30),
                 TextField(
@@ -139,12 +140,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   child: ElevatedButton(
                     onPressed: _carregando ? null : _solicitarToken,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
+                      backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     child: _carregando
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("ENVIAR CÓDIGO", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                        ? const CircularProgressIndicator(color: AppColors.white)
+                        : const Text("ENVIAR CÓDIGO", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
                   ),
                 ),
               ],
@@ -154,7 +155,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const Text(
                   "Digite o código recebido por e-mail e sua nova senha.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 15, color: Colors.black54),
+                  style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 30),
                 TextField(
@@ -196,19 +197,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   child: ElevatedButton(
                     onPressed: _carregando ? null : _resetarSenha,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
+                      backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     child: _carregando
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("SALVAR NOVA SENHA", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                        ? const CircularProgressIndicator(color: AppColors.white)
+                        : const Text("SALVAR NOVA SENHA", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
                   ),
                 ),
                 const SizedBox(height: 10),
                 // Permite voltar para reenviar o código se necessário
                 TextButton(
                   onPressed: () => setState(() => _etapaReset = false),
-                  child: const Text("Reenviar código", style: TextStyle(color: Colors.blueAccent)),
+                  child: const Text("Reenviar código", style: TextStyle(color: AppColors.primary)),
                 ),
               ],
             ],
