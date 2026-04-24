@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/network/api_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../services/storage_service.dart';
 import '../../../../widgets/custom_text_field_widget.dart';
 
-/// Gerencia a entrada de senhas e a interação de ocultar/mostrar caracteres.
+/// Gerencia a entrada de senhas e a interacao de ocultar/mostrar caracteres.
 class ChangePasswordFormWidget extends StatefulWidget {
   const ChangePasswordFormWidget({super.key});
 
@@ -18,6 +21,7 @@ class _ChangePasswordFormWidgetState extends State<ChangePasswordFormWidget> {
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
+  bool _carregando = false;
 
   @override
   void initState() {
@@ -29,12 +33,76 @@ class _ChangePasswordFormWidgetState extends State<ChangePasswordFormWidget> {
 
   @override
   void dispose() {
-    // O isolamento deste escopo garante que credenciais cruas sejam removidas
-    // da memória o mais breve possível por questões de segurança.
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _alterarSenha() async {
+    if (_carregando) return;
+
+    final senhaAtual = _currentPasswordController.text;
+    final novaSenha = _newPasswordController.text;
+    final confirmarSenha = _confirmPasswordController.text;
+
+    if (senhaAtual.isEmpty || novaSenha.isEmpty || confirmarSenha.isEmpty) {
+      _exibirMensagem('Preencha todos os campos de senha.', AppColors.warning);
+      return;
+    }
+
+    if (novaSenha != confirmarSenha) {
+      _exibirMensagem('As senhas nao coincidem.', AppColors.warning);
+      return;
+    }
+
+    setState(() => _carregando = true);
+
+    try {
+      final token = await StorageService().getToken();
+
+      if (!mounted) return;
+
+      if (token == null || token.isEmpty) {
+        _exibirMensagem('Sessao expirada. Faca login novamente.', AppColors.error);
+        return;
+      }
+
+      final resultado = await ApiService().alterarSenha(
+        token: token,
+        senhaAtual: senhaAtual,
+        novaSenha: novaSenha,
+      );
+
+      if (!mounted) return;
+
+      final status = resultado['status'] as int;
+      final body = resultado['body'] as Map<String, dynamic>;
+
+      if (status == 200) {
+        _currentPasswordController.clear();
+        _newPasswordController.clear();
+        _confirmPasswordController.clear();
+        _exibirMensagem('Senha atualizada com sucesso!', AppColors.success);
+      } else {
+        _exibirMensagem(
+          ApiService.errorMessage(body, 'Erro ao atualizar senha.'),
+          AppColors.error,
+        );
+      }
+    } on ApiRequestTimeoutException {
+      _exibirMensagem('Servidor demorou para responder. Tente novamente.', AppColors.error);
+    } catch (_) {
+      _exibirMensagem('Erro de conexao. Verifique o servidor.', AppColors.error);
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
+  }
+
+  void _exibirMensagem(String texto, Color cor) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(texto), backgroundColor: cor),
+    );
   }
 
   @override
@@ -103,9 +171,7 @@ class _ChangePasswordFormWidgetState extends State<ChangePasswordFormWidget> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                // TODO: Implementar a chamada para a API atualizar a senha
-              },
+              onPressed: _carregando ? null : _alterarSenha,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -114,14 +180,23 @@ class _ChangePasswordFormWidgetState extends State<ChangePasswordFormWidget> {
                 ),
                 elevation: 0,
               ),
-              child: const Text(
-                'Atualizar Senha',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
+              child: _carregando
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: AppColors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Atualizar Senha',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
           ),
         ],

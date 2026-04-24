@@ -233,3 +233,116 @@ def test_obter_perfil_usuario_autenticado(client: TestClient, usuario_registrado
     assert dados["nome_completo"] == "Pietro Teste"
     assert dados["email"] == "pietro@fallsense.com"
     assert dados["telefone"] == "11999999999"
+
+
+def test_atualizar_perfil_usuario_autenticado(client: TestClient, usuario_registrado):
+    """PATCH /me deve atualizar dados cadastrais do usuario autenticado."""
+    token = _fazer_login_completo(client, usuario_registrado)
+
+    resposta = client.patch(
+        "/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "nome_completo": "Pietro Atualizado",
+            "email": "pietro.novo@fallsense.com",
+            "telefone": "11888888888",
+        },
+    )
+
+    assert resposta.status_code == 200
+    dados = resposta.json()
+    assert dados["nome_completo"] == "Pietro Atualizado"
+    assert dados["email"] == "pietro.novo@fallsense.com"
+    assert dados["telefone"] == "11888888888"
+    assert dados["access_token"]
+
+    perfil = client.get(
+        "/auth/me",
+        headers={"Authorization": f"Bearer {dados['access_token']}"},
+    )
+    assert perfil.status_code == 200
+    assert perfil.json()["email"] == "pietro.novo@fallsense.com"
+
+
+def test_atualizar_perfil_rejeita_email_duplicado(client: TestClient, usuario_registrado):
+    """PATCH /me nao deve permitir usar e-mail de outro usuario."""
+    client.post("/auth/registrar", json={
+        "nome_completo": "Outro Usuario",
+        "email": "outro@fallsense.com",
+        "telefone": "11777777777",
+        "senha": "Senha123!"
+    })
+    token = _fazer_login_completo(client, usuario_registrado)
+
+    resposta = client.patch(
+        "/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "nome_completo": "Pietro Teste",
+            "email": "outro@fallsense.com",
+            "telefone": "11999999999",
+        },
+    )
+
+    assert resposta.status_code == 400
+
+
+def test_alterar_senha_usuario_autenticado(client: TestClient, usuario_registrado):
+    """PATCH /me/senha deve trocar a senha do usuario autenticado."""
+    token = _fazer_login_completo(client, usuario_registrado)
+
+    resposta = client.patch(
+        "/auth/me/senha",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "senha_atual": "Senha123!",
+            "nova_senha": "NovaSenha123!",
+        },
+    )
+
+    assert resposta.status_code == 200
+
+    login_antigo = client.post("/auth/login", json={
+        "email": "pietro@fallsense.com",
+        "senha": "Senha123!",
+    })
+    assert login_antigo.status_code == 400
+
+    login_novo = client.post("/auth/login", json={
+        "email": "pietro@fallsense.com",
+        "senha": "NovaSenha123!",
+    })
+    assert login_novo.status_code == 200
+    assert login_novo.json()["requer_2fa"] is True
+
+
+def test_alterar_senha_rejeita_senha_atual_incorreta(client: TestClient, usuario_registrado):
+    """PATCH /me/senha deve validar a senha atual antes de salvar."""
+    token = _fazer_login_completo(client, usuario_registrado)
+
+    resposta = client.patch(
+        "/auth/me/senha",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "senha_atual": "SenhaErrada123!",
+            "nova_senha": "NovaSenha123!",
+        },
+    )
+
+    assert resposta.status_code == 400
+
+
+def test_alterar_senha_rejeita_senha_fraca(client: TestClient, usuario_registrado):
+    """PATCH /me/senha deve reaproveitar a regra de forca da senha."""
+    token = _fazer_login_completo(client, usuario_registrado)
+
+    resposta = client.patch(
+        "/auth/me/senha",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "senha_atual": "Senha123!",
+            "nova_senha": "fraca",
+        },
+    )
+
+    assert resposta.status_code == 422
