@@ -2,6 +2,21 @@ from datetime import datetime
 import re
 from pydantic import BaseModel, EmailStr, field_validator
 
+
+def validar_forca_senha(valor: str) -> str:
+    msg_erro = "A senha deve conter pelo menos letras, números e um caractere especial."
+
+    tem_o_tamanho = len(valor) >= 8
+    tem_letra = re.search(r"[A-Za-z]", valor)
+    tem_numero = re.search(r"\d", valor)
+    tem_especial = re.search(r"[!@#$%^&*(),.?\":{}|<>]", valor)
+
+    if not (tem_o_tamanho and tem_letra and tem_numero and tem_especial):
+        raise ValueError(msg_erro)
+
+    return valor
+
+
 # Schema recebido no cadastro. Ele define o formato esperado pela API e aplica
 # as regras mínimas de validação antes de a senha seguir para hash.
 class RegistroPayload(BaseModel):
@@ -13,22 +28,7 @@ class RegistroPayload(BaseModel):
     @field_validator("senha")
     @classmethod
     def validar_forca_senha(cls, v: str) -> str:
-        # Mantemos uma mensagem única para que o cliente receba um retorno
-        # simples quando a senha não atender aos critérios mínimos.
-        msg_erro = "A senha deve conter pelo menos letras, números e um caractere especial."
-
-        # Cada verificação cobre um requisito diferente de complexidade.
-        tem_o_tamanho = len(v) >= 8
-        tem_letra = re.search(r"[A-Za-z]", v)
-        tem_numero = re.search(r"\d", v)
-        tem_especial = re.search(r"[!@#$%^&*(),.?\":{}|<>]", v)
-
-        # Se qualquer um dos critérios falhar, a senha é rejeitada ainda na
-        # validação do schema.
-        if not (tem_o_tamanho and tem_letra and tem_numero and tem_especial):
-            raise ValueError(msg_erro)
-            
-        return v
+        return validar_forca_senha(v)
 
 # Payload usado no login. O código 2FA é opcional porque a autenticação pode
 # acontecer em duas etapas: senha primeiro e token do autenticador depois.
@@ -56,6 +56,27 @@ class PerfilResponse(BaseModel):
     nome_completo: str | None = None
     email: EmailStr
     telefone: str | None = None
+
+
+class PerfilUpdatePayload(BaseModel):
+    nome_completo: str
+    email: EmailStr
+    telefone: str | None = None
+
+
+class PerfilAtualizadoResponse(PerfilResponse):
+    access_token: str | None = None
+    token_type: str | None = None
+
+
+class AlterarSenhaPayload(BaseModel):
+    senha_atual: str
+    nova_senha: str
+
+    @field_validator("nova_senha")
+    @classmethod
+    def validar_nova_senha(cls, v: str) -> str:
+        return validar_forca_senha(v)
 
 
 class PessoaMonitoradaPayload(BaseModel):

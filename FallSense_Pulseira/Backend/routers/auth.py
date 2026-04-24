@@ -6,7 +6,14 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from models.user import LogAuditoria, User
-from schemas.auth_schemas import LoginPayload, PerfilResponse, RegistroPayload
+from schemas.auth_schemas import (
+    AlterarSenhaPayload,
+    LoginPayload,
+    PerfilAtualizadoResponse,
+    PerfilResponse,
+    PerfilUpdatePayload,
+    RegistroPayload,
+)
 from security.database import get_db
 from security.hashing import gerar_hash, verificar_senha
 from security.jwt_handler import criar_token_jwt, revogar_token, verificar_token_jwt
@@ -93,6 +100,23 @@ def _registrar_falha_login(usuario: User, db: Session, challenge_id: str | None 
         usuario.lockout_until = time.time() + LOCKOUT_TIME_SECONDS
         _remover_login_challenge(challenge_id)
     db.commit()
+
+
+def _obter_usuario_autenticado(
+    authorization: str,
+    db: Session,
+) -> tuple[str, User]:
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=400, detail="Formato de token inválido.")
+
+    token = authorization.removeprefix("Bearer ").strip()
+    email = verificar_token_jwt(token, db)
+    usuario = db.query(User).filter(User.email == email).first()
+
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+    return token, usuario
 
 
 @router.post("/registrar", status_code=201)
@@ -213,18 +237,85 @@ def obter_perfil_usuario(
     authorization: str = Header(..., description="Bearer <token>"),
     db: Session = Depends(get_db),
 ):
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=400, detail="Formato de token inválido.")
-
-    token = authorization.removeprefix("Bearer ").strip()
-    email = verificar_token_jwt(token, db)
-    usuario = db.query(User).filter(User.email == email).first()
-
-    if not usuario:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    _, usuario = _obter_usuario_autenticado(authorization, db)
 
     return PerfilResponse(
         nome_completo=usuario.nome_completo,
         email=usuario.email,
         telefone=usuario.telefone,
     )
+
+
+@router.patch("/me", response_model=PerfilAtualizadoResponse)
+def atualizar_perfil_usuario(
+    payload: PerfilUpdatePayload,
+    authorization: str = Header(..., description="Bearer <token>"),
+    db: Session = Depends(get_db),
+):
+    token_atual, usuario = _obter_usuario_autenticado(authorization, db)
+
+    nome = payload.nome_completo.strip()
+    email = str(payload.email).strip().lower()
+    telefone = payload.telefone.strip() if payload.telefone else None
+
+    if not nome:
+        raise HTTPException(status_code=400, detail="Nome completo é obrigatório.")
+
+    email_foi_alterado = email != usuario.email
+    if email_foi_alterado:
+        usuario_existente = db.query(User).filter(User.email == email).first()
+        if usuario_existente and usuario_existente.id != usuario.id:
+            raise HTTPException(status_code=400, detail="E-mail já cadastrado no sistema.")
+
+    usuario.nome_completo = nome
+    usuario.email = email
+    usuario.telefone = telefone
+
+    db.add(
+        LogAuditoria(
+            usuario_id=usuario.id,
+            acao="PERFIL_ATUALIZADO",
+            descricao="Dados cadastrais atualizados pelo usuário.",
+            status="SUCESSO",
+        )
+    )
+    db.commit()
+    db.refresh(usuario)
+
+    novo_token = None
+    if email_foi_alterado:
+        novo_token = criar_token_jwt(usuario.email)
+        revogar_token(token_atual, db)
+
+    return PerfilAtualizadoResponse(
+        nome_completo=usuario.nome_completo,
+        email=usuario.email,
+        telefone=usuario.telefone,
+        access_token=novo_token,
+        token_type="bearer" if novo_token else None,
+    )
+
+
+@router.patch("/me/senha")
+def alterar_senha_usuario(
+    payload: AlterarSenhaPayload,
+    authorization: str = Header(..., description="Bearer <token>"),
+    db: Session = Depends(get_db),
+):
+    _, usuario = _obter_usuario_autenticado(authorization, db)
+
+    if not verificar_senha(usuario.hashed_password, payload.senha_atual):
+        raise HTTPException(status_code=400, detail="Senha atual incorreta.")
+
+    usuario.hashed_password = gerar_hash(payload.nova_senha)
+    db.add(
+        LogAuditoria(
+            usuario_id=usuario.id,
+            acao="SENHA_ALTERADA",
+            descricao="Senha alterada pelo usuário autenticado.",
+            status="SUCESSO",
+        )
+    )
+    db.commit()
+
+    return {"mensagem": "Senha atualizada com sucesso!"}

@@ -133,6 +133,50 @@ class ApiService {
     );
   }
 
+  Future<Map<String, dynamic>> atualizarPerfil({
+    required String token,
+    required String nome,
+    required String email,
+    required String telefone,
+  }) async {
+    return _sendRequest(
+      'PATCH /auth/me',
+      () => _client.patch(
+        Uri.parse('$baseUrl/me'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({
+          "nome_completo": nome,
+          "email": email,
+          "telefone": telefone,
+        }),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> alterarSenha({
+    required String token,
+    required String senhaAtual,
+    required String novaSenha,
+  }) async {
+    return _sendRequest(
+      'PATCH /auth/me/senha',
+      () => _client.patch(
+        Uri.parse('$baseUrl/me/senha'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({
+          "senha_atual": senhaAtual,
+          "nova_senha": novaSenha,
+        }),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> obterMonitorados(String token) async {
     return _sendRequest(
       'GET /monitorados',
