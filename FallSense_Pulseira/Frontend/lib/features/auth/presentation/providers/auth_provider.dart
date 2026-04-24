@@ -9,10 +9,12 @@ class AuthUserProfile {
   const AuthUserProfile({
     required this.name,
     required this.email,
+    this.phone = '',
   });
 
   final String name;
   final String email;
+  final String phone;
 }
 
 class MonitoredPerson {
@@ -76,12 +78,13 @@ final userProfileProvider = FutureProvider<AuthUserProfile>((ref) async {
     if (status == 200) {
       final nomeCompleto = (body['nome_completo'] as String?)?.trim();
       final email = (body['email'] as String?)?.trim() ?? '';
+      final telefone = (body['telefone'] as String?)?.trim() ?? (body['phone'] as String?)?.trim() ?? '';
       final resolvedName = (nomeCompleto != null && nomeCompleto.isNotEmpty)
           ? nomeCompleto
           : (email.isNotEmpty ? email : 'Usuario');
 
       await storage.saveUserName(resolvedName);
-      return AuthUserProfile(name: resolvedName, email: email);
+      return AuthUserProfile(name: resolvedName, email: email, phone: telefone);
     }
   } catch (_) {
     // Se a chamada remota falhar, fazemos fallback local para não quebrar a UI.

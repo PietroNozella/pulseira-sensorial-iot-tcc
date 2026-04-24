@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../widgets/logout_button_widget.dart';
 import '../widgets/profile_header_widget.dart';
 import '../widgets/profile_menu_item_widget.dart';
+import 'edit_profile_screen.dart';
 
 /// Tela de perfil do usuário com acesso centralizado às configurações pessoais.
 ///
@@ -55,7 +56,14 @@ class ProfileScreen extends StatelessWidget {
 											ProfileMenuItemWidget(
 												title: 'Editar Perfil',
 												icon: Icons.edit,
-												onTap: () {},
+												onTap: () {
+													Navigator.push(
+														context,
+														MaterialPageRoute(
+															builder: (context) => const EditProfileScreen(),
+														),
+													);
+												},
 											),
 											ProfileMenuItemWidget(
 												title: 'Contatos de Emergência',
