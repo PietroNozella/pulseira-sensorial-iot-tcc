@@ -177,6 +177,23 @@ class ApiService {
     );
   }
 
+  Future<Map<String, dynamic>> excluirConta({
+    required String token,
+    required String senha,
+  }) async {
+    return _sendRequest(
+      'DELETE /auth/me',
+      () => _client.delete(
+        Uri.parse('$baseUrl/me'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({"senha": senha}),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> obterMonitorados(String token) async {
     return _sendRequest(
       'GET /monitorados',

@@ -5,9 +5,10 @@ import time
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
-from models.user import LogAuditoria, User
+from models.user import LogAuditoria, PessoaMonitorada, Pulseira, User
 from schemas.auth_schemas import (
     AlterarSenhaPayload,
+    ExcluirContaPayload,
     LoginPayload,
     PerfilAtualizadoResponse,
     PerfilResponse,
@@ -319,3 +320,49 @@ def alterar_senha_usuario(
     db.commit()
 
     return {"mensagem": "Senha atualizada com sucesso!"}
+
+
+@router.delete("/me")
+def excluir_conta_usuario(
+    payload: ExcluirContaPayload,
+    authorization: str = Header(..., description="Bearer <token>"),
+    db: Session = Depends(get_db),
+):
+    token, usuario = _obter_usuario_autenticado(authorization, db)
+
+    if not verificar_senha(usuario.hashed_password, payload.senha):
+        raise HTTPException(status_code=400, detail="Senha incorreta.")
+
+    usuario_id = usuario.id
+    usuario_email = usuario.email
+    pessoas_ids = [
+        pessoa_id
+        for (pessoa_id,) in db.query(PessoaMonitorada.id)
+        .filter(PessoaMonitorada.usuario_responsavel_id == usuario_id)
+        .all()
+    ]
+
+    db.add(
+        LogAuditoria(
+            usuario_id=usuario_id,
+            acao="CONTA_EXCLUIDA",
+            descricao="Conta excluida pelo usuario autenticado.",
+            status="SUCESSO",
+        )
+    )
+    db.flush()
+
+    if pessoas_ids:
+        db.query(Pulseira).filter(Pulseira.pessoa_monitorada_id.in_(pessoas_ids)).update(
+            {Pulseira.pessoa_monitorada_id: None},
+            synchronize_session=False,
+        )
+        db.query(PessoaMonitorada).filter(PessoaMonitorada.id.in_(pessoas_ids)).delete(
+            synchronize_session=False,
+        )
+
+    db.delete(usuario)
+    db.commit()
+    revogar_token(token, db)
+
+    return {"mensagem": f"Conta {usuario_email} excluida com sucesso."}

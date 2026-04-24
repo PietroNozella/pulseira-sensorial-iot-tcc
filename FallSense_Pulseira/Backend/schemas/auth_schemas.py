@@ -79,6 +79,10 @@ class AlterarSenhaPayload(BaseModel):
         return validar_forca_senha(v)
 
 
+class ExcluirContaPayload(BaseModel):
+    senha: str
+
+
 class PessoaMonitoradaPayload(BaseModel):
     nome_completo: str
 
