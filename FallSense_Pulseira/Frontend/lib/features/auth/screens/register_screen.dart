@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../../core/network/api_service.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -19,16 +20,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _verSenha = false;
   bool _verConfirmeSenha = false;
+  bool _carregando = false;
 
   Future<void> _realizarCadastro() async {
-    String nome = _nomeController.text.trim();
-    String email = _emailController.text.trim().toLowerCase();
-    String telefoneRaw = _telefoneController.text;
-    String senha = _senhaController.text;
-    String confirmeSenha = _confirmeSenhaController.text;
+    if (_carregando) return;
 
-    // Limpa a máscara para enviar apenas números ao banco
-    String telefone = telefoneRaw.replaceAll(RegExp(r'[^0-9]'), '');
+    final nome = _nomeController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
+    final telefoneRaw = _telefoneController.text;
+    final senha = _senhaController.text;
+    final confirmeSenha = _confirmeSenhaController.text;
+    final telefone = telefoneRaw.replaceAll(RegExp(r'[^0-9]'), '');
 
     if (nome.isEmpty || email.isEmpty || telefone.isEmpty || senha.isEmpty) {
       _mensagemErro("Preencha todos os campos!");
@@ -39,6 +41,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _mensagemErro("As senhas não coincidem!");
       return;
     }
+
+    setState(() => _carregando = true);
 
     try {
       final resultado = await ApiService().registrar(
@@ -58,13 +62,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         final String? totpUri = corpo['totp_uri'];
 
         if (segredo2FA == null || segredo2FA.isEmpty) {
-          _mensagemErro("Erro: Chave 2FA não gerada pelo servidor.");
+          _mensagemErro("Erro: chave 2FA não gerada pelo servidor.");
           return;
         }
 
-        // Recupera os códigos de backup gerados pelo servidor
-        final List<String> recoveryCodes =
-            List<String>.from(corpo['recovery_codes'] ?? []);
+        final recoveryCodes = List<String>.from(corpo['recovery_codes'] ?? []);
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -85,31 +87,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
           },
         );
       } else {
-        // --- LOGICA DE LIMPEZA DO ERRO ATUALIZADA AQUI ---
-        var detalhe = corpo['detail'];
-        String msgParaUsuario = "Erro ao realizar cadastro.";
+        final detalhe = corpo['detail'];
+        var msgParaUsuario = "Erro ao realizar cadastro.";
 
         if (detalhe is List && detalhe.isNotEmpty) {
-          // Captura a mensagem do servidor e limpa os termos técnicos
-          msgParaUsuario = detalhe[0]['msg'].toString().replaceAll('Value error, ', '');
+          msgParaUsuario =
+              detalhe[0]['msg'].toString().replaceAll('Value error, ', '');
         } else if (detalhe != null) {
           msgParaUsuario = detalhe.toString();
         }
-        
+
         _mensagemErro(msgParaUsuario);
-        // ------------------------------------------------
       }
+    } on ApiRequestTimeoutException {
+      _mensagemErro("Servidor demorou para responder. Tente novamente.");
     } catch (e) {
-      _mensagemErro("Erro de conexão. O servidor está ligado?");
+      _mensagemErro("Erro de conexão. Verifique o servidor.");
+    } finally {
+      if (mounted) setState(() => _carregando = false);
     }
   }
 
   void _mensagemErro(String texto) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(texto), 
+        content: Text(texto),
         backgroundColor: AppColors.error,
-        duration: const Duration(seconds: 4), // Aumentado para dar tempo de ler a regra
+        duration: const Duration(seconds: 4),
       ),
     );
   }
@@ -140,22 +144,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 20),
-                  const Icon(Icons.person_add_alt_1, size: 80, color: AppColors.primary),
+                  const Icon(
+                    Icons.person_add_alt_1,
+                    size: 80,
+                    color: AppColors.primary,
+                  ),
                   const SizedBox(height: 10),
                   const Text(
                     "Crie sua Conta",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primary),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
                   ),
                   const SizedBox(height: 30),
-                  _buildTextField(_nomeController, "Nome Completo", Icons.person),
-                  const SizedBox(height: 15),
-                  _buildTextField(_emailController, "E-mail", Icons.email, keyboardType: TextInputType.emailAddress),
-                  const SizedBox(height: 15),
-                  
                   _buildTextField(
-                    _telefoneController, 
-                    "Telefone", 
-                    Icons.phone, 
+                    _nomeController,
+                    "Nome Completo",
+                    Icons.person,
+                  ),
+                  const SizedBox(height: 15),
+                  _buildTextField(
+                    _emailController,
+                    "E-mail",
+                    Icons.email,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 15),
+                  _buildTextField(
+                    _telefoneController,
+                    "Telefone",
+                    Icons.phone,
                     hint: "(00) 00000-0000",
                     keyboardType: TextInputType.number,
                     inputFormatters: [
@@ -163,44 +183,59 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       TelefoneInputFormatter(),
                     ],
                   ),
-                  
                   const SizedBox(height: 15),
-                  
                   _buildTextField(
-                    _senhaController, 
-                    "Senha", 
-                    Icons.lock, 
+                    _senhaController,
+                    "Senha",
+                    Icons.lock,
                     isPassword: true,
                     isVisible: _verSenha,
                     onToggle: () => setState(() => _verSenha = !_verSenha),
                   ),
-                  
                   const SizedBox(height: 15),
-                  
                   _buildTextField(
-                    _confirmeSenhaController, 
-                    "Confirme sua Senha", 
-                    Icons.lock_reset, 
+                    _confirmeSenhaController,
+                    "Confirme sua Senha",
+                    Icons.lock_reset,
                     isPassword: true,
                     isVisible: _verConfirmeSenha,
-                    onToggle: () => setState(() => _verConfirmeSenha = !_verConfirmeSenha),
+                    onToggle: () {
+                      setState(() => _verConfirmeSenha = !_verConfirmeSenha);
+                    },
                   ),
-
                   const SizedBox(height: 30),
                   SizedBox(
                     width: double.infinity,
                     height: 55,
                     child: ElevatedButton(
-                      onPressed: _realizarCadastro,
+                      onPressed: _carregando ? null : _realizarCadastro,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                      child: const Text("CADASTRAR", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.white)),
+                      child: _carregando
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(
+                                color: AppColors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              "CADASTRAR",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.white,
+                              ),
+                            ),
                     ),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _carregando ? null : () => Navigator.pop(context),
                     child: const Text("Já tem uma conta? Faça Login"),
                   ),
                 ],
@@ -213,18 +248,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildTextField(
-    TextEditingController controller, 
-    String label, 
-    IconData icon, 
-    {
-      bool isPassword = false, 
-      bool isVisible = false,
-      VoidCallback? onToggle,
-      TextInputType keyboardType = TextInputType.text, 
-      String? hint,
-      List<TextInputFormatter>? inputFormatters,
-    }
-  ) {
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    bool isPassword = false,
+    bool isVisible = false,
+    VoidCallback? onToggle,
+    TextInputType keyboardType = TextInputType.text,
+    String? hint,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
     return TextField(
       controller: controller,
       obscureText: isPassword ? !isVisible : false,
@@ -237,12 +270,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         filled: true,
         fillColor: AppColors.white.withValues(alpha: 0.7),
         prefixIcon: Icon(icon),
-        suffixIcon: isPassword 
-          ? IconButton(
-              icon: Icon(isVisible ? Icons.visibility : Icons.visibility_off),
-              onPressed: onToggle,
-            )
-          : null,
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(isVisible ? Icons.visibility : Icons.visibility_off),
+                onPressed: onToggle,
+              )
+            : null,
       ),
     );
   }
@@ -250,12 +283,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
 class TelefoneInputFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     var text = newValue.text.replaceAll(RegExp(r'\D'), '');
     if (text.length > 11) text = text.substring(0, 11);
 
     var formatted = '';
-    if (text.length >= 1) {
+    if (text.isNotEmpty) {
       formatted += '(' + text.substring(0, text.length >= 2 ? 2 : text.length);
     }
     if (text.length > 2) {
