@@ -49,6 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
             arguments: {
               'email': _emailController.text.trim(),
               'senha': _passwordController.text,
+              'challengeId': corpo['challenge_id'],
               'secretKey': null,
             },
           );

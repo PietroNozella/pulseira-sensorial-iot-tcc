@@ -95,7 +95,10 @@ def test_login_primeira_etapa_retorna_requer_2fa(client: TestClient, usuario_reg
         "senha": "Senha123!"
     })
     assert resposta.status_code == 200
-    assert resposta.json()["requer_2fa"] is True
+    dados = resposta.json()
+    assert dados["requer_2fa"] is True
+    assert "challenge_id" in dados
+    assert dados["expires_in"] == 120
 
 
 def test_login_completo_com_2fa(client: TestClient, usuario_registrado):
@@ -112,6 +115,29 @@ def test_login_completo_com_2fa(client: TestClient, usuario_registrado):
     dados = resposta.json()
     assert "access_token" in dados
     assert dados["nome_completo"] == "Pietro Teste"
+    assert dados["requer_2fa"] is False
+
+
+def test_login_completo_com_challenge_2fa(client: TestClient, usuario_registrado):
+    """Segunda etapa com challenge_id não deve exigir reenviar a senha."""
+    primeira_etapa = client.post("/auth/login", json={
+        "email": "pietro@fallsense.com",
+        "senha": "Senha123!"
+    })
+    assert primeira_etapa.status_code == 200
+
+    challenge_id = primeira_etapa.json()["challenge_id"]
+    codigo = pyotp.TOTP(usuario_registrado["totp_secret"]).now()
+
+    resposta = client.post("/auth/login", json={
+        "email": "pietro@fallsense.com",
+        "challenge_id": challenge_id,
+        "codigo_2fa": codigo
+    })
+
+    assert resposta.status_code == 200
+    dados = resposta.json()
+    assert "access_token" in dados
     assert dados["requer_2fa"] is False
 
 
