@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/network/api_service.dart';
+import '../../../core/theme/app_colors.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -67,7 +68,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Conta criada! Vamos configurar a segurança."),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
 
@@ -105,7 +106,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(texto), 
-        backgroundColor: Colors.redAccent,
+        backgroundColor: AppColors.error,
         duration: const Duration(seconds: 4), // Aumentado para dar tempo de ler a regra
       ),
     );
@@ -129,7 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Container(
             width: double.infinity,
             height: double.infinity,
-            color: Colors.white.withOpacity(0.8),
+            color: AppColors.white.withValues(alpha: 0.8),
           ),
           SafeArea(
             child: SingleChildScrollView(
@@ -137,11 +138,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 20),
-                  const Icon(Icons.person_add_alt_1, size: 80, color: Colors.blueAccent),
+                  const Icon(Icons.person_add_alt_1, size: 80, color: AppColors.primary),
                   const SizedBox(height: 10),
                   const Text(
                     "Crie sua Conta",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primary),
                   ),
                   const SizedBox(height: 30),
                   _buildTextField(_nomeController, "Nome Completo", Icons.person),
@@ -190,10 +191,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: ElevatedButton(
                       onPressed: _realizarCadastro,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: AppColors.primary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      child: const Text("CADASTRAR", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                      child: const Text("CADASTRAR", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.white)),
                     ),
                   ),
                   TextButton(
@@ -232,7 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         hintText: hint,
         border: const OutlineInputBorder(),
         filled: true,
-        fillColor: Colors.white70,
+        fillColor: AppColors.white.withValues(alpha: 0.7),
         prefixIcon: Icon(icon),
         suffixIcon: isPassword 
           ? IconButton(

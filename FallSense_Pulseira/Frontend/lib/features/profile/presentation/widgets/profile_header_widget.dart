@@ -30,6 +30,12 @@ class ProfileHeaderWidget extends ConsumerWidget {
       orElse: () => const AuthUserProfile(name: 'Usuario', email: ''),
     );
 
+    // Extrai o primeiro e o último nome do usuário
+    final nameParts = userProfile.name.trim().split(RegExp(r'\s+'));
+    final displayName = nameParts.length > 1
+        ? '${nameParts.first} ${nameParts.last}'
+        : nameParts.first;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -55,7 +61,7 @@ class ProfileHeaderWidget extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  userProfile.name,
+                  displayName,
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
@@ -64,9 +70,7 @@ class ProfileHeaderWidget extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  userProfile.email.isNotEmpty
-                      ? userProfile.email
-                      : 'Responsável Principal',
+                  userProfile.email,
                   style: const TextStyle(
                     fontSize: 15,
                     color: AppColors.textSecondary,
