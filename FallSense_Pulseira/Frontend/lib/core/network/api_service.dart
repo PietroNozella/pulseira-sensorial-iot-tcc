@@ -43,8 +43,9 @@ class ApiService {
 
   Future<Map<String, dynamic>> login({
     required String email,
-    required String senha,
+    String? senha,
     String? codigo2fa,
+    String? challengeId,
   }) async {
     return _sendRequest(
       'POST /auth/login',
@@ -55,6 +56,7 @@ class ApiService {
           "email": email,
           "senha": senha,
           "codigo_2fa": codigo2fa,
+          "challenge_id": challengeId,
         }),
       ),
     );

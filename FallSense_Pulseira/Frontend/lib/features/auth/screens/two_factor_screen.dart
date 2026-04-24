@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 class TwoFactorScreen extends StatefulWidget {
   final String email;
   final String senha;
+  final String? challengeId;
   final String? secretKey;
   final String? totpUri;
   final List<String>? recoveryCodes;
@@ -16,6 +17,7 @@ class TwoFactorScreen extends StatefulWidget {
     super.key,
     required this.email,
     required this.senha,
+    this.challengeId,
     this.secretKey,
     this.totpUri,
     this.recoveryCodes,
@@ -42,8 +44,9 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
     try {
       final resultado = await ApiService().login(
         email: widget.email,
-        senha: widget.senha,
+        senha: widget.challengeId == null ? widget.senha : null,
         codigo2fa: codigo,
+        challengeId: widget.challengeId,
       );
 
       final int status = resultado['status'];

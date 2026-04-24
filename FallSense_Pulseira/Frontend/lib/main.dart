@@ -57,6 +57,7 @@ class MyApp extends StatelessWidget {
             builder: (context) => TwoFactorScreen(
               email: args['email'] ?? '',
               senha: args['senha'] ?? '',
+              challengeId: args['challengeId'],
               // secretKey só vem após registro; null quando usuário vem pelo login
               secretKey: args['secretKey'],
               totpUri: args['totpUri'],

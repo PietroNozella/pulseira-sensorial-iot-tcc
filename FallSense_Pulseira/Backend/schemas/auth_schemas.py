@@ -34,8 +34,9 @@ class RegistroPayload(BaseModel):
 # acontecer em duas etapas: senha primeiro e token do autenticador depois.
 class LoginPayload(BaseModel):
     email: EmailStr
-    senha: str
+    senha: str | None = None
     codigo_2fa: str | None = None
+    challenge_id: str | None = None
 
 # Payload mínimo para iniciar o fluxo de recuperação de senha.
 class EsqueciSenhaPayload(BaseModel):
