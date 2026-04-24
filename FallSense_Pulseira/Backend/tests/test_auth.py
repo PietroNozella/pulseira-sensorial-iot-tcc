@@ -5,7 +5,7 @@ Cobre cadastro, login em duas etapas, bloqueio por tentativas inválidas e logou
 import pyotp
 from fastapi.testclient import TestClient
 
-from models.user import User
+from models.user import PessoaMonitorada, Pulseira, User
 from tests.conftest import get_db_direto
 
 
@@ -346,3 +346,73 @@ def test_alterar_senha_rejeita_senha_fraca(client: TestClient, usuario_registrad
     )
 
     assert resposta.status_code == 422
+
+
+def test_excluir_conta_usuario_autenticado(client: TestClient, usuario_registrado):
+    """DELETE /me deve excluir o usuario e invalidar o token atual."""
+    token = _fazer_login_completo(client, usuario_registrado)
+    db = get_db_direto()
+    usuario = db.query(User).filter(User.email == "pietro@fallsense.com").first()
+    pessoa = PessoaMonitorada(
+        usuario_responsavel_id=usuario.id,
+        nome_completo="Pessoa Monitorada",
+    )
+    db.add(pessoa)
+    db.commit()
+    db.refresh(pessoa)
+    db.add(Pulseira(
+        mac_address="AA:BB:CC:DD:EE:01",
+        pessoa_monitorada_id=pessoa.id,
+        versao_firmware="1.0.0",
+    ))
+    db.commit()
+    db.close()
+
+    resposta = client.request(
+        "DELETE",
+        "/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"senha": "Senha123!"},
+    )
+
+    assert resposta.status_code == 200
+
+    perfil = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert perfil.status_code == 401
+
+    login = client.post("/auth/login", json={
+        "email": "pietro@fallsense.com",
+        "senha": "Senha123!",
+    })
+    assert login.status_code == 400
+
+    db = get_db_direto()
+    usuario = db.query(User).filter(User.email == "pietro@fallsense.com").first()
+    pessoa = db.query(PessoaMonitorada).filter(
+        PessoaMonitorada.nome_completo == "Pessoa Monitorada"
+    ).first()
+    pulseira = db.query(Pulseira).filter(
+        Pulseira.mac_address == "AA:BB:CC:DD:EE:01"
+    ).first()
+    db.close()
+    assert usuario is None
+    assert pessoa is None
+    assert pulseira is not None
+    assert pulseira.pessoa_monitorada_id is None
+
+
+def test_excluir_conta_rejeita_senha_incorreta(client: TestClient, usuario_registrado):
+    """DELETE /me nao deve excluir conta quando a senha estiver incorreta."""
+    token = _fazer_login_completo(client, usuario_registrado)
+
+    resposta = client.request(
+        "DELETE",
+        "/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"senha": "SenhaErrada123!"},
+    )
+
+    assert resposta.status_code == 400
+
+    perfil = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert perfil.status_code == 200
