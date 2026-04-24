@@ -68,7 +68,10 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
 
         Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
       } else {
-        _exibirMensagem(corpo['detail']?.toString() ?? "Código inválido.", AppColors.error);
+        _exibirMensagem(
+          ApiService.errorMessage(corpo, "Código inválido."),
+          AppColors.error,
+        );
       }
     } on ApiRequestTimeoutException {
       _exibirMensagem(

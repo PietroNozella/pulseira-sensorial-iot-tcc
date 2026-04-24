@@ -42,9 +42,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         );
         setState(() => _etapaReset = true);
       } else {
-        final erro =
-            resultado['body']['detail'] ?? "Erro ao solicitar recuperação.";
-        _exibirMensagem(erro.toString(), AppColors.error);
+        _exibirMensagem(
+          ApiService.errorMessage(
+            resultado['body'],
+            "Erro ao solicitar recuperação.",
+          ),
+          AppColors.error,
+        );
       }
     } on ApiRequestTimeoutException {
       _exibirMensagem(
@@ -87,8 +91,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _exibirMensagem("Senha alterada com sucesso!", AppColors.success);
         Navigator.pop(context);
       } else {
-        final erro = resultado['body']['detail'] ?? "Erro ao resetar senha.";
-        _exibirMensagem(erro.toString(), AppColors.error);
+        _exibirMensagem(
+          ApiService.errorMessage(resultado['body'], "Erro ao resetar senha."),
+          AppColors.error,
+        );
       }
     } on ApiRequestTimeoutException {
       _exibirMensagem(

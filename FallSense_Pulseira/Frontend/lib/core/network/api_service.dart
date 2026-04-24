@@ -17,8 +17,38 @@ class ApiRequestTimeoutException implements Exception {
 }
 
 class ApiService {
-  static const String baseUrl = "https://fallsense-api.onrender.com/auth";
+  factory ApiService() => _instance;
+
+  ApiService._({http.Client? client}) : _client = client ?? http.Client();
+
+  static final ApiService _instance = ApiService._();
+
+  static const String apiUrl = "https://fallsense-api.onrender.com";
+  static const String baseUrl = "$apiUrl/auth";
   static const Duration requestTimeout = Duration(seconds: 15);
+
+  final http.Client _client;
+
+  static String errorMessage(
+    Map<String, dynamic> body,
+    String fallback,
+  ) {
+    final detail = body['detail'];
+
+    if (detail is List && detail.isNotEmpty) {
+      final firstError = detail.first;
+      if (firstError is Map && firstError['msg'] != null) {
+        return firstError['msg'].toString().replaceAll('Value error, ', '');
+      }
+      return firstError.toString();
+    }
+
+    if (detail != null) {
+      return detail.toString();
+    }
+
+    return fallback;
+  }
 
   Future<Map<String, dynamic>> registrar({
     required String nome,
@@ -28,7 +58,7 @@ class ApiService {
   }) async {
     return _sendRequest(
       'POST /auth/registrar',
-      () => http.post(
+      () => _client.post(
         Uri.parse('$baseUrl/registrar'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
@@ -49,7 +79,7 @@ class ApiService {
   }) async {
     return _sendRequest(
       'POST /auth/login',
-      () => http.post(
+      () => _client.post(
         Uri.parse('$baseUrl/login'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
@@ -65,7 +95,7 @@ class ApiService {
   Future<Map<String, dynamic>> solicitarRecuperacao(String email) async {
     return _sendRequest(
       'POST /auth/esqueci-senha',
-      () => http.post(
+      () => _client.post(
         Uri.parse('$baseUrl/esqueci-senha'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": email}),
@@ -79,7 +109,7 @@ class ApiService {
   }) async {
     return _sendRequest(
       'POST /auth/resetar-senha',
-      () => http.post(
+      () => _client.post(
         Uri.parse('$baseUrl/resetar-senha'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
@@ -93,7 +123,7 @@ class ApiService {
   Future<Map<String, dynamic>> obterPerfil(String token) async {
     return _sendRequest(
       'GET /auth/me',
-      () => http.get(
+      () => _client.get(
         Uri.parse('$baseUrl/me'),
         headers: {
           "Content-Type": "application/json",
@@ -106,8 +136,8 @@ class ApiService {
   Future<Map<String, dynamic>> obterMonitorados(String token) async {
     return _sendRequest(
       'GET /monitorados',
-      () => http.get(
-        Uri.parse('https://fallsense-api.onrender.com/monitorados'),
+      () => _client.get(
+        Uri.parse('$apiUrl/monitorados'),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
@@ -119,8 +149,8 @@ class ApiService {
   Future<Map<String, dynamic>> obterPulseiras(String token) async {
     return _sendRequest(
       'GET /pulseiras',
-      () => http.get(
-        Uri.parse('https://fallsense-api.onrender.com/pulseiras'),
+      () => _client.get(
+        Uri.parse('$apiUrl/pulseiras'),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
@@ -132,8 +162,8 @@ class ApiService {
   Future<Map<String, dynamic>> obterEventos(String token) async {
     return _sendRequest(
       'GET /eventos',
-      () => http.get(
-        Uri.parse('https://fallsense-api.onrender.com/eventos'),
+      () => _client.get(
+        Uri.parse('$apiUrl/eventos'),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
