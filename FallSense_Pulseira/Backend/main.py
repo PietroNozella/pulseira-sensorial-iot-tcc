@@ -34,6 +34,12 @@ app.include_router(pulseira.router, prefix="/pulseiras", tags=["Pulseira"])
 app.include_router(telemetria.router, prefix="/eventos", tags=["Telemetria"])
 
 
+@app.get("/health", tags=["Health"])
+def health_check():
+    """Retorna rapidamente se o processo da API está ativo."""
+    return {"status": "ok"}
+
+
 @app.get("/teste-banco", tags=["Teste"])
 def testar_banco(db: Session = Depends(get_db)):
     """Valida conectividade básica com o banco configurado."""
