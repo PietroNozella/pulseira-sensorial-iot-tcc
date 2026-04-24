@@ -87,17 +87,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           },
         );
       } else {
-        final detalhe = corpo['detail'];
-        var msgParaUsuario = "Erro ao realizar cadastro.";
-
-        if (detalhe is List && detalhe.isNotEmpty) {
-          msgParaUsuario =
-              detalhe[0]['msg'].toString().replaceAll('Value error, ', '');
-        } else if (detalhe != null) {
-          msgParaUsuario = detalhe.toString();
-        }
-
-        _mensagemErro(msgParaUsuario);
+        _mensagemErro(
+          ApiService.errorMessage(corpo, "Erro ao realizar cadastro."),
+        );
       }
     } on ApiRequestTimeoutException {
       _mensagemErro("Servidor demorou para responder. Tente novamente.");

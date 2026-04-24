@@ -67,7 +67,9 @@ class _LoginScreenState extends State<LoginScreen> {
           _irParaHome();
         }
       } else {
-        _exibirErro(corpo['detail']?.toString() ?? "Erro ao realizar login");
+        _exibirErro(
+          ApiService.errorMessage(corpo, "Erro ao realizar login"),
+        );
       }
     } on ApiRequestTimeoutException {
       _exibirErro("Servidor demorou para responder. Tente novamente.");
