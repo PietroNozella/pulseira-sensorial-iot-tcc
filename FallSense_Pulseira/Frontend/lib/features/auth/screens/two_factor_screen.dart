@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../services/storage_service.dart';
 import '../../../core/network/api_service.dart';
+import '../../../core/theme/app_colors.dart';
 
 class TwoFactorScreen extends StatefulWidget {
   final String email;
@@ -29,7 +30,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
     String codigo = _codeController.text.trim();
 
     if (codigo.length != 6) {
-      _exibirMensagem("O código deve ter 6 dígitos!", Colors.orange);
+      _exibirMensagem("O código deve ter 6 dígitos!", AppColors.warning);
       return;
     }
 
@@ -61,10 +62,10 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
 
         Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
       } else {
-        _exibirMensagem(corpo['detail']?.toString() ?? "Código inválido.", Colors.red);
+        _exibirMensagem(corpo['detail']?.toString() ?? "Código inválido.", AppColors.error);
       }
     } catch (e) {
-      _exibirMensagem("Erro de conexão com o servidor.", Colors.red);
+      _exibirMensagem("Erro de conexão com o servidor.", AppColors.error);
     } finally {
       if (mounted) setState(() => _carregando = false);
     }
@@ -84,7 +85,8 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
       appBar: AppBar(
         title: const Text("Segurança FallSense"),
         centerTitle: true,
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -95,7 +97,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
               Icon(
                 modoConfiguracao ? Icons.phonelink_setup : Icons.phonelink_lock, 
                 size: 80, 
-                color: Colors.blueAccent
+              color: AppColors.primary
               ),
               const SizedBox(height: 20),
               Text(
@@ -108,15 +110,15 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
                 const Text(
                   "1. Copie a chave abaixo\n2. Cole no Google Authenticator\n3. Digite o código de 6 dígitos gerado",
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.black87),
+                style: TextStyle(color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 20),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
@@ -132,10 +134,10 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.copy, color: Colors.blueAccent),
+                      icon: const Icon(Icons.copy, color: AppColors.primary),
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: widget.secretKey!));
-                          _exibirMensagem("Chave copiada!", Colors.blue);
+                        _exibirMensagem("Chave copiada!", AppColors.primary);
                         },
                       )
                     ],
@@ -146,7 +148,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
                 const Text(
                   "Insira o código de 6 dígitos gerado no seu aplicativo de autenticação.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
                 ),
               ],
 
@@ -163,7 +165,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   counterText: "", 
                   hintText: "000000",
-                  hintStyle: const TextStyle(color: Colors.grey, letterSpacing: 15)
+                hintStyle: const TextStyle(color: AppColors.textTertiary, letterSpacing: 15)
                 ),
               ),
               const SizedBox(height: 40),
@@ -173,18 +175,18 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
                 child: ElevatedButton(
                   onPressed: _carregando ? null : _validarCodigo,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
+                  backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: _carregando 
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("VERIFICAR E ENTRAR", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  ? const CircularProgressIndicator(color: AppColors.white)
+                  : const Text("VERIFICAR E ENTRAR", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
                 ),
               ),
               const SizedBox(height: 20),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text("Cancelar", style: TextStyle(color: Colors.grey)),
+              child: const Text("Cancelar", style: TextStyle(color: AppColors.textSecondary)),
               )
             ],
           ),

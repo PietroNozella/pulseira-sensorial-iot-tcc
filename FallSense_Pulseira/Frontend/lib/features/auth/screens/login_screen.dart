@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'forgot_password_screen.dart';
 import '../../../services/storage_service.dart';
 import '../../../core/network/api_service.dart';
+import '../../../core/theme/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -75,14 +76,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _irParaHome() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Login realizado com sucesso!"), backgroundColor: Colors.green),
+      const SnackBar(content: Text("Login realizado com sucesso!"), backgroundColor: AppColors.success),
     );
     Navigator.pushReplacementNamed(context, '/home');
   }
 
   void _exibirErro(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: Colors.red),
+      SnackBar(content: Text(msg), backgroundColor: AppColors.error),
     );
   }
 
@@ -96,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             children: [
               const SizedBox(height: 40),
-              const Icon(Icons.security, size: 80, color: Colors.blue), 
+              const Icon(Icons.security, size: 80, color: AppColors.primary), 
               const SizedBox(height: 30),
               TextField(
                 controller: _emailController,
@@ -146,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Text(
                     "Esqueci minha senha",
                     style: TextStyle(
-                      color: Colors.blueAccent, 
+                      color: AppColors.primary, 
                       fontWeight: FontWeight.bold
                     ),
                   ),
@@ -161,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: ElevatedButton(
                   onPressed: _carregando ? null : _tentarEntrar,
                   child: _carregando 
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2))
                     : const Text("Entrar", style: TextStyle(fontSize: 18)),
                 ),
               ),
