@@ -25,6 +25,9 @@ def test_registro_sucesso(client: TestClient):
     dados = resposta.json()
     # Esses dados sensíveis só devem aparecer no momento do cadastro inicial.
     assert "totp_secret" in dados
+    assert dados["totp_uri"].startswith("otpauth://totp/FallSense:pietro%40fallsense.com")
+    assert f"secret={dados['totp_secret']}" in dados["totp_uri"]
+    assert "issuer=FallSense" in dados["totp_uri"]
     assert "recovery_codes" in dados
     assert len(dados["recovery_codes"]) == 8
 

@@ -11,7 +11,7 @@ from models.user import User, LogAuditoria
 # Importa as ferramentas de segurança
 from security.hashing import gerar_hash, verificar_senha
 from security.jwt_handler import criar_token_jwt, verificar_token_jwt, revogar_token
-from security.totp_handler import gerar_segredo_totp, verificar_totp
+from security.totp_handler import gerar_segredo_totp, gerar_uri_totp, verificar_totp
 from schemas.auth_schemas import PerfilResponse, RegistroPayload, LoginPayload
 
 
@@ -56,6 +56,7 @@ def registrar_usuario(payload: RegistroPayload, db: Session = Depends(get_db)):
     return {
         "mensagem": "Usuário {} cadastrado com sucesso!".format(payload.nome_completo),
         "totp_secret": novo_usuario.totp_secret,
+        "totp_uri": gerar_uri_totp(novo_usuario.totp_secret, novo_usuario.email),
         # Enviados apenas uma vez — o usuário deve guardar esses códigos
         "recovery_codes": codigos_texto
     }
