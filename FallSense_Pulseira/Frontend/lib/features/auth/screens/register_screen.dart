@@ -55,6 +55,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (!mounted) return;
 
         final String? segredo2FA = corpo['totp_secret'];
+        final String? totpUri = corpo['totp_uri'];
 
         if (segredo2FA == null || segredo2FA.isEmpty) {
           _mensagemErro("Erro: Chave 2FA não gerada pelo servidor.");
@@ -79,6 +80,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             'email': email,
             'senha': senha,
             'secretKey': segredo2FA,
+            'totpUri': totpUri,
             'recoveryCodes': recoveryCodes,
           },
         );

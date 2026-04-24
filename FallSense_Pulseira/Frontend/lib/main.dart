@@ -59,6 +59,7 @@ class MyApp extends StatelessWidget {
               senha: args['senha'] ?? '',
               // secretKey só vem após registro; null quando usuário vem pelo login
               secretKey: args['secretKey'],
+              totpUri: args['totpUri'],
               // recoveryCodes só vem após registro; null no login normal
               recoveryCodes: args['recoveryCodes'] != null
                   ? List<String>.from(args['recoveryCodes'])

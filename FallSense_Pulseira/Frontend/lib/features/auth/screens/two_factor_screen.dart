@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../../services/storage_service.dart';
 import '../../../core/network/api_service.dart';
 import '../../../core/theme/app_colors.dart';
@@ -8,6 +9,7 @@ class TwoFactorScreen extends StatefulWidget {
   final String email;
   final String senha;
   final String? secretKey;
+  final String? totpUri;
   final List<String>? recoveryCodes;
 
   const TwoFactorScreen({
@@ -15,6 +17,7 @@ class TwoFactorScreen extends StatefulWidget {
     required this.email,
     required this.senha,
     this.secretKey,
+    this.totpUri,
     this.recoveryCodes,
   });
 
@@ -80,6 +83,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
   @override
   Widget build(BuildContext context) {
     bool modoConfiguracao = widget.secretKey != null;
+    final String? totpUri = widget.totpUri;
 
     return Scaffold(
       appBar: AppBar(
@@ -108,11 +112,58 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
 
               if (modoConfiguracao) ...[
                 const Text(
-                  "1. Copie a chave abaixo\n2. Cole no Google Authenticator\n3. Digite o código de 6 dígitos gerado",
+                  "1. Escaneie o QR Code no Google Authenticator\n2. Ou copie a chave manual abaixo\n3. Digite o código de 6 dígitos gerado",
                   textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 20),
+                if (totpUri != null && totpUri.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                    ),
+                    child: QrImageView(
+                      data: totpUri,
+                      version: QrVersions.auto,
+                      size: 220,
+                      backgroundColor: AppColors.white,
+                      semanticsLabel: "QR Code para configurar autenticador",
+                      errorStateBuilder: (context, error) {
+                        return const SizedBox(
+                          width: 220,
+                          height: 220,
+                          child: Center(
+                            child: Text(
+                              "Não foi possível gerar o QR Code. Use a chave manual abaixo.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ] else ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+                    ),
+                    child: const Text(
+                      "QR Code indisponível. Use a chave manual abaixo para configurar o autenticador.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
