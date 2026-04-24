@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../profile/presentation/screens/profile_screen.dart';
-import 'home_screen.dart';
+import '../core/theme/app_colors.dart';
+import 'profile/presentation/screens/profile_screen.dart';
+import 'home/presentation/screens/home_screen.dart';
 
 /// Container raiz da navegação interna após autenticação.
 ///

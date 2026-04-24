@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/register_screen.dart';
-import 'features/home/presentation/screens/main_navigation_screen.dart';
+import 'features/main_navigation_screen.dart';
 import 'features/auth/screens/two_factor_screen.dart'; 
+import 'core/theme/app_colors.dart';
 
 void main() {
   runApp(
@@ -22,7 +23,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Pulseira Sensorial',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primaryColor: AppColors.primary,
+        colorScheme: const ColorScheme.light(primary: AppColors.primary),
         useMaterial3: false, 
       ),
       
