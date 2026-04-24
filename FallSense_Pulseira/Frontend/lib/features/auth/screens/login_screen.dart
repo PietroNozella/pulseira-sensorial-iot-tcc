@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'forgot_password_screen.dart';
-import '../../../services/storage_service.dart';
+
 import '../../../core/network/api_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../services/storage_service.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,9 +15,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
   bool _carregando = false;
-  
-  // VARIÁVEL PARA CONTROLAR A VISIBILIDADE DA SENHA
   bool _verSenha = false;
 
   Future<void> _tentarEntrar() async {
@@ -53,22 +53,25 @@ class _LoginScreenState extends State<LoginScreen> {
             },
           );
         } else {
-          // Salva o token JWT caso o backend retorne sem exigir 2FA
           final String? token = corpo['access_token'];
           final String? nomeCompleto = corpo['nome_completo'];
+
           if (token != null) {
             await StorageService().saveToken(token);
           }
           if (nomeCompleto != null && nomeCompleto.trim().isNotEmpty) {
             await StorageService().saveUserName(nomeCompleto.trim());
           }
+
           _irParaHome();
         }
       } else {
         _exibirErro(corpo['detail']?.toString() ?? "Erro ao realizar login");
       }
+    } on ApiRequestTimeoutException {
+      _exibirErro("Servidor demorou para responder. Tente novamente.");
     } catch (e) {
-      _exibirErro("Erro de conexão: Verifique o servidor");
+      _exibirErro("Erro de conexão. Verifique o servidor.");
     } finally {
       if (mounted) setState(() => _carregando = false);
     }
@@ -76,7 +79,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _irParaHome() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Login realizado com sucesso!"), backgroundColor: AppColors.success),
+      const SnackBar(
+        content: Text("Login realizado com sucesso!"),
+        backgroundColor: AppColors.success,
+      ),
     );
     Navigator.pushReplacementNamed(context, '/home');
   }
@@ -90,14 +96,17 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("FallSense - Login"), centerTitle: true),
+      appBar: AppBar(
+        title: const Text("FallSense - Login"),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: SingleChildScrollView(
           child: Column(
             children: [
               const SizedBox(height: 40),
-              const Icon(Icons.security, size: 80, color: AppColors.primary), 
+              const Icon(Icons.security, size: 80, color: AppColors.primary),
               const SizedBox(height: 30),
               TextField(
                 controller: _emailController,
@@ -109,66 +118,67 @@ class _LoginScreenState extends State<LoginScreen> {
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-              
-              // CAMPO DE SENHA ATUALIZADO COM O OLHINHO
               TextField(
                 controller: _passwordController,
-                obscureText: !_verSenha, // Controla se o texto fica oculto
+                obscureText: !_verSenha,
                 decoration: InputDecoration(
                   labelText: "Senha",
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.lock),
-                  // BOTÃO PARA MOSTRAR/ESCONDER
                   suffixIcon: IconButton(
                     icon: Icon(
                       _verSenha ? Icons.visibility : Icons.visibility_off,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _verSenha = !_verSenha;
-                      });
-                    },
+                    onPressed: () => setState(() => _verSenha = !_verSenha),
                   ),
                 ),
               ),
-
-              // --- BOTÃO ESQUECI MINHA SENHA ADICIONADO AQUI ---
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ForgotPasswordScreen(),
-                      ),
-                    );
-                  },
+                  onPressed: _carregando
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ForgotPasswordScreen(),
+                            ),
+                          );
+                        },
                   child: const Text(
                     "Esqueci minha senha",
                     style: TextStyle(
-                      color: AppColors.primary, 
-                      fontWeight: FontWeight.bold
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
-              // ------------------------------------------------
-              
-              const SizedBox(height: 20), // Ajustei o espaço para o botão caber bem
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _carregando ? null : _tentarEntrar,
-                  child: _carregando 
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2))
-                    : const Text("Entrar", style: TextStyle(fontSize: 18)),
+                  child: _carregando
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: AppColors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text("Entrar", style: TextStyle(fontSize: 18)),
                 ),
               ),
               const SizedBox(height: 15),
               TextButton(
-                onPressed: () => Navigator.pushNamed(context, '/register'),
+                onPressed: _carregando
+                    ? null
+                    : () => Navigator.pushNamed(context, '/register'),
                 child: const Text("Ainda não tem conta? Criar uma conta"),
               ),
             ],

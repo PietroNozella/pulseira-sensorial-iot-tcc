@@ -67,6 +67,11 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
       } else {
         _exibirMensagem(corpo['detail']?.toString() ?? "Código inválido.", AppColors.error);
       }
+    } on ApiRequestTimeoutException {
+      _exibirMensagem(
+        "Servidor demorou para responder. Tente novamente.",
+        AppColors.error,
+      );
     } catch (e) {
       _exibirMensagem("Erro de conexão com o servidor.", AppColors.error);
     } finally {
