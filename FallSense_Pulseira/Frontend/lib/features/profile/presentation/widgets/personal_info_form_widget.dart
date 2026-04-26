@@ -135,7 +135,7 @@ class _PersonalInfoFormWidgetState extends ConsumerState<PersonalInfoFormWidget>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Informacoes Pessoais',
+            'Informações Pessoais',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -186,7 +186,7 @@ class _PersonalInfoFormWidgetState extends ConsumerState<PersonalInfoFormWidget>
                       ),
                     )
                   : const Text(
-                      'Salvar Alteracoes',
+                      'Salvar Alterações',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

@@ -73,7 +73,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home_rounded),
-            label: 'Inicio',
+            label: 'Início',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.watch_outlined),

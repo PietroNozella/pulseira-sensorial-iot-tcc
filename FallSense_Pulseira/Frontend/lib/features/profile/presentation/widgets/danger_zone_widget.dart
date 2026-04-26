@@ -102,7 +102,7 @@ class _DangerZoneWidgetState extends State<DangerZoneWidget> {
         ),
         const SizedBox(height: 8),
         const Text(
-          'A exclusao da conta e permanente e nao pode ser desfeita.',
+          'A exclusão da conta é permanente e não pode ser desfeita.',
           style: TextStyle(
             fontSize: 14,
             color: AppColors.textSecondary,
