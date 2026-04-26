@@ -58,17 +58,17 @@ class ProfileScreen extends StatelessWidget {
                         },
                       ),
                       ProfileMenuItemWidget(
-                        title: 'Contatos de Emergencia',
+                        title: 'Contatos de Emergência',
                         icon: Icons.contact_phone,
                         onTap: () => _mostrarFuncionalidadeEmDesenvolvimento(context),
                       ),
                       ProfileMenuItemWidget(
-                        title: 'Autenticacao e Seguranca',
+                        title: 'Autenticação e Segurança',
                         icon: Icons.fingerprint,
                         onTap: () => _mostrarFuncionalidadeEmDesenvolvimento(context),
                       ),
                       ProfileMenuItemWidget(
-                        title: 'Permissoes do App',
+                        title: 'Permissões do App',
                         icon: Icons.phonelink_lock_rounded,
                         onTap: () => _mostrarFuncionalidadeEmDesenvolvimento(context),
                       ),
