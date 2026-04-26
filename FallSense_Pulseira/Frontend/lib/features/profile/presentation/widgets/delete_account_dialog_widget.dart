@@ -46,7 +46,7 @@ class _DeleteAccountDialogWidgetState extends State<DeleteAccountDialogWidget> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text(
-            'Esta acao e permanente e nao pode ser desfeita. Confirme sua senha para continuar.',
+            'Esta ação é permanente e não pode ser desfeita. Confirme sua senha para continuar.',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 14,
