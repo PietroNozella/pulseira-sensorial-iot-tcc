@@ -5,7 +5,7 @@ Cobre cadastro, login em duas etapas, bloqueio por tentativas inválidas e logou
 import pyotp
 from fastapi.testclient import TestClient
 
-from models.user import PessoaMonitorada, Pulseira, User
+from models.user import LogAuditoria, PessoaMonitorada, Pulseira, User
 from tests.conftest import get_db_direto
 
 
@@ -158,6 +158,87 @@ def test_login_2fa_incorreto(client: TestClient, usuario_registrado):
         "codigo_2fa": "000000"
     })
     assert resposta.status_code == 400
+
+
+def test_login_senha_incorreta_gera_log(client: TestClient, usuario_registrado):
+    """Senha invalida deve registrar log de falha de autenticacao."""
+    resposta = client.post("/auth/login", json={
+        "email": "pietro@fallsense.com",
+        "senha": "SenhaErrada1"
+    })
+    assert resposta.status_code == 400
+
+    db = get_db_direto()
+    log = db.query(LogAuditoria).filter(
+        LogAuditoria.acao == "LOGIN_FALHA_SENHA",
+        LogAuditoria.status == "FALHA",
+    ).first()
+    db.close()
+
+    assert log is not None
+    assert log.usuario_id is not None
+
+
+def test_login_primeira_etapa_gera_log_desafio_2fa(client: TestClient, usuario_registrado):
+    """Senha valida sem codigo deve registrar inicio do desafio 2FA."""
+    resposta = client.post("/auth/login", json={
+        "email": "pietro@fallsense.com",
+        "senha": "Senha123!"
+    })
+    assert resposta.status_code == 200
+
+    db = get_db_direto()
+    log = db.query(LogAuditoria).filter(
+        LogAuditoria.acao == "LOGIN_2FA_DESAFIO_INICIADO",
+        LogAuditoria.status == "SUCESSO",
+    ).first()
+    db.close()
+
+    assert log is not None
+    assert log.usuario_id is not None
+
+
+def test_login_2fa_incorreto_gera_log(client: TestClient, usuario_registrado):
+    """Codigo 2FA invalido deve registrar log de falha."""
+    resposta = client.post("/auth/login", json={
+        "email": "pietro@fallsense.com",
+        "senha": "Senha123!",
+        "codigo_2fa": "000000"
+    })
+    assert resposta.status_code == 400
+
+    db = get_db_direto()
+    log = db.query(LogAuditoria).filter(
+        LogAuditoria.acao == "LOGIN_FALHA_2FA",
+        LogAuditoria.status == "FALHA",
+    ).first()
+    db.close()
+
+    assert log is not None
+    assert log.usuario_id is not None
+
+
+def test_login_completo_gera_log_sucesso_2fa(client: TestClient, usuario_registrado):
+    """Login completo deve registrar sucesso apos validacao do 2FA."""
+    totp_secret = usuario_registrado["totp_secret"]
+    codigo = pyotp.TOTP(totp_secret).now()
+
+    resposta = client.post("/auth/login", json={
+        "email": "pietro@fallsense.com",
+        "senha": "Senha123!",
+        "codigo_2fa": codigo
+    })
+    assert resposta.status_code == 200
+
+    db = get_db_direto()
+    log = db.query(LogAuditoria).filter(
+        LogAuditoria.acao == "LOGIN_2FA_SUCESSO",
+        LogAuditoria.status == "SUCESSO",
+    ).first()
+    db.close()
+
+    assert log is not None
+    assert log.usuario_id is not None
 
 
 # ---------------------------------------------------------------------------
