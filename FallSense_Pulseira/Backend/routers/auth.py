@@ -74,6 +74,23 @@ def _remover_login_challenge(challenge_id: str | None) -> None:
         login_challenges.pop(challenge_id, None)
 
 
+def _registrar_log_autenticacao(
+    db: Session,
+    usuario: User,
+    acao: str,
+    descricao: str,
+    status: str,
+) -> None:
+    db.add(
+        LogAuditoria(
+            usuario_id=usuario.id,
+            acao=acao,
+            descricao=descricao,
+            status=status,
+        )
+    )
+
+
 def _emitir_token_login(
     usuario: User,
     db: Session,
@@ -81,6 +98,13 @@ def _emitir_token_login(
 ):
     usuario.failed_attempts = 0
     usuario.lockout_until = 0.0
+    _registrar_log_autenticacao(
+        db,
+        usuario,
+        "LOGIN_2FA_SUCESSO",
+        "Autenticacao concluida com validacao 2FA.",
+        "SUCESSO",
+    )
     db.commit()
     _remover_login_challenge(challenge_id)
 
@@ -176,6 +200,13 @@ def login_usuario(payload: LoginPayload, db: Session = Depends(get_db)):
 
         codigo_limpo = payload.codigo_2fa.replace(" ", "")
         if not verificar_totp(usuario.totp_secret, codigo_limpo):
+            _registrar_log_autenticacao(
+                db,
+                usuario,
+                "LOGIN_FALHA_2FA",
+                "Tentativa de login bloqueada por codigo 2FA invalido.",
+                "FALHA",
+            )
             _registrar_falha_login(usuario, db, payload.challenge_id)
             raise HTTPException(status_code=400, detail="Código 2FA inválido.")
 
@@ -185,11 +216,26 @@ def login_usuario(payload: LoginPayload, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Credenciais inválidas.")
 
     if not verificar_senha(usuario.hashed_password, payload.senha):
+        _registrar_log_autenticacao(
+            db,
+            usuario,
+            "LOGIN_FALHA_SENHA",
+            "Tentativa de login bloqueada por senha invalida.",
+            "FALHA",
+        )
         _registrar_falha_login(usuario, db)
         raise HTTPException(status_code=400, detail="Credenciais inválidas.")
 
     if not payload.codigo_2fa:
         challenge_id = _criar_login_challenge(usuario.email)
+        _registrar_log_autenticacao(
+            db,
+            usuario,
+            "LOGIN_2FA_DESAFIO_INICIADO",
+            "Senha validada com sucesso; aguardando codigo 2FA.",
+            "SUCESSO",
+        )
+        db.commit()
         return {
             "requer_2fa": True,
             "mensagem": "Senha correta. Insira o código 2FA.",
@@ -199,6 +245,13 @@ def login_usuario(payload: LoginPayload, db: Session = Depends(get_db)):
 
     codigo_limpo = payload.codigo_2fa.replace(" ", "")
     if not verificar_totp(usuario.totp_secret, codigo_limpo):
+        _registrar_log_autenticacao(
+            db,
+            usuario,
+            "LOGIN_FALHA_2FA",
+            "Tentativa de login bloqueada por codigo 2FA invalido.",
+            "FALHA",
+        )
         _registrar_falha_login(usuario, db)
         raise HTTPException(status_code=400, detail="Código 2FA inválido.")
 
