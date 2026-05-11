@@ -9,3 +9,4 @@ __pycache__/
 # Cada membro do grupo terá o seu próprio arquivo localmente
 *.db
 *.sqlite3
+logs/
