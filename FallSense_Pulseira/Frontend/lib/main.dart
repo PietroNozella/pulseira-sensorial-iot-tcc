@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:device_preview/device_preview.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/register_screen.dart';
 import 'features/main_navigation_screen.dart';
@@ -8,8 +10,11 @@ import 'core/theme/app_colors.dart';
 
 void main() {
   runApp(
-    const ProviderScope(
-      child: MyApp(),
+    DevicePreview(
+      enabled: !kReleaseMode,
+      builder: (context) => const ProviderScope(
+        child: MyApp(),
+      ),
     ),
   );
 }
@@ -21,6 +26,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      locale: DevicePreview.locale(context),
+      builder: DevicePreview.appBuilder,
       title: 'Pulseira Sensorial',
       theme: ThemeData(
         primaryColor: AppColors.primary,
