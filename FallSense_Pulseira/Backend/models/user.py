@@ -29,7 +29,7 @@ class User(Base):
     lockout_until = Column(Float, default=0.0, nullable=False)
 
     termos_aceitos = Column(Boolean, default=False, nullable=False)
-    dados_aceite_termos = Column(DateTime, server_default=func.now())
+    data_aceite_termos = Column(DateTime, server_default=func.now())
     
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
