@@ -5,7 +5,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from models.user import LogAuditoria, TokenRevogado  # noqa: F401
-from routers import auth, pessoa_monitorada, pulseira, recuperacao, telemetria
+# Importamos o novo roteador de compliance (conformidade)
+from routers import auth, compliance, pessoa_monitorada, pulseira, recuperacao, telemetria
 from security.database import Base, engine, get_db
 
 # Inicializa a aplicação principal da API.
@@ -33,16 +34,19 @@ app.include_router(pessoa_monitorada.router, prefix="/monitorados", tags=["Pesso
 app.include_router(pulseira.router, prefix="/pulseiras", tags=["Pulseira"])
 app.include_router(telemetria.router, prefix="/eventos", tags=["Telemetria"])
 
+# Rota para gestão de Termos de Uso e Compliance LGPD
+app.include_router(compliance.router, prefix="/compliance", tags=["Conformidade e LGPD"])
+
 
 @app.get("/health", tags=["Health"])
-def health_check():
-    """Retorna rapidamente se o processo da API está ativo."""
+#Retorna rapidamente se o processo da API está ativo
+def verificar_saude():
     return {"status": "ok"}
 
 
 @app.get("/teste-banco", tags=["Teste"])
+# Valida conectividade básica com o banco configurado
 def testar_banco(db: Session = Depends(get_db)):
-    """Valida conectividade básica com o banco configurado."""
     try:
         db.execute(text("SELECT 1"))
         return {
@@ -54,7 +58,7 @@ def testar_banco(db: Session = Depends(get_db)):
 
 
 @app.get("/logs-auditoria", tags=["Teste"])
+#Retorna os registros mais recentes do log de auditoria persistidos no banco
 def ver_logs(db: Session = Depends(get_db)):
-    """Retorna os registros mais recentes do log de auditoria."""
     logs = db.query(LogAuditoria).order_by(LogAuditoria.data_hora.desc()).limit(10).all()
     return {"logs_recentes": logs}
