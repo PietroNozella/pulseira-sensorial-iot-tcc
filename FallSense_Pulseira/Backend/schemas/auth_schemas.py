@@ -24,6 +24,7 @@ class RegistroPayload(BaseModel):
     email: EmailStr
     telefone: str
     senha: str
+    termos_aceitos: bool
 
     @field_validator("senha")
     @classmethod

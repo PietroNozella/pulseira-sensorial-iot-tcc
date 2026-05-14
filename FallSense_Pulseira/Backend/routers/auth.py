@@ -159,6 +159,7 @@ def registrar_usuario(payload: RegistroPayload, db: Session = Depends(get_db)):
         hashed_password=gerar_hash(payload.senha),
         totp_secret=gerar_segredo_totp(),
         recovery_codes_hash=codigos_hash,
+        termos_aceitos=payload.termos_aceitos,
     )
 
     db.add(novo_usuario)

@@ -25,7 +25,7 @@ class ApiService {
 
   static const String apiUrl = "https://fallsense-api.onrender.com";
   static const String baseUrl = "$apiUrl/auth";
-  static const Duration requestTimeout = Duration(seconds: 15);
+  static const Duration requestTimeout = Duration(seconds: 30);
 
   final http.Client _client;
 
@@ -55,6 +55,7 @@ class ApiService {
     required String email,
     required String telefone,
     required String senha,
+    required bool termosAceitos, // Adicionado apenas este parâmetro
   }) async {
     return _sendRequest(
       'POST /auth/registrar',
@@ -66,6 +67,7 @@ class ApiService {
           "email": email,
           "telefone": telefone,
           "senha": senha,
+          "termos_aceitos": termosAceitos, // Adicionado o envio para o banco
         }),
       ),
     );
