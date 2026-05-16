@@ -4,21 +4,21 @@ import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 
 class ComplianceService {
-  // URL base do backend de vocês no Render
+  // URL base do backend no Render
   final String baseUrl = "https://fallsense-api.onrender.com"; 
 
   Future<void> baixarTermosUso(String usuarioEmail) async {
     try {
-      // Endpoint criado pelo Pietro e Diego recebendo o e-mail do usuário logado
+      // Endpoint do backend recebendo o e-mail do usuário logado
       final url = Uri.parse('$baseUrl/termos/download?usuario_id=$usuarioEmail');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        // Encontra a pasta interna do celular para salvar o arquivo temporariamente
+        // pasta interna do celular para salvar o arquivo temporariamente
         final directory = await getApplicationDocumentsDirectory();
         final filePath = "${directory.path}/FallSense_Termos_de_Uso.pdf";
         
-        // Escreve os bytes salvando o PDF no aparelho
+        // bytes salvando o PDF no aparelho
         final file = File(filePath);
         await file.writeAsBytes(response.bodyBytes);
 

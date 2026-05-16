@@ -115,7 +115,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     const nomeArquivo = "FallSense_Termos_de_Uso.pdf";
 
                                     if (kIsWeb) {
-                                      // 🌐 FLUXO CHROME: Transforma os bytes recebidos em um download nativo do navegador
+                                      // FLUXO CHROME: Transforma os bytes recebidos em um download nativo do navegador
                                       final blob = html.Blob([bytes], 'application/pdf');
                                       final urlBlob = html.Url.createObjectUrlFromBlob(blob);
                                       
@@ -125,7 +125,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         
                                       html.Url.revokeObjectUrl(urlBlob); // Limpa a memória
                                     } else {
-                                      // 📱 FLUXO CELULAR: Salva os bytes recebidos na pasta do aparelho e abre
+                                      // FLUXO CELULAR: Salva os bytes recebidos na pasta do aparelho e abre
                                       final directory = await getTemporaryDirectory();
                                       final filePath = "${directory.path}/$nomeArquivo";
                                       
