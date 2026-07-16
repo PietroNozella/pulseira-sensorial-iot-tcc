@@ -204,3 +204,15 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# Para o IOT
+# Ignora credenciais reais de hardware para não vazar no GitHub
+env_hardware.py
+config_privada.py
+wifi_config.json
+
+# Ignora pastas temporárias de IDEs e do compilador do ESP32/Thonny
+.mpy/
+*.mpy
+.thonny/
